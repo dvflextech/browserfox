@@ -2,18 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lolifox Startpage</title>
+  <title>Celestial Fox Startpage</title>
   <style>
-    /* Sleek, Modern, and Cutesy Dark Theme Palette */
+    /* Celestial Blue & Gold Palette */
     :root {
-      --bg-color: #0c090e;              /* OLED Black/Obsidian */
-      --card-bg: rgba(22, 19, 28, 0.7); /* Translucent obsidian */
-      --card-border: rgba(255, 255, 255, 0.06); /* Nearly invisible border */
-      --text-main: #f0f0f5;             /* Soft off-white */
-      --text-sub: #b0a9b8;              /* Soft lavender grey */
-      --accent-soft: #ba7eff;           /* Soft violet glow */
-      --accent-cute: #ff8df0;           /* Cutesy pink accent */
-      --glow: rgba(186, 126, 255, 0.3); /* Subtle backdrop blur glow */
+      --bg-dark: #050811;
+      --card-bg: rgba(10, 16, 32, 0.65);
+      --card-border: rgba(234, 179, 8, 0.25); /* Subtle gold rim */
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --accent-gold: #f59e0b;
+      --accent-blue: #38bdf8;
+      --glow-gold: rgba(245, 158, 11, 0.35);
+      --glow-blue: rgba(56, 189, 248, 0.4);
     }
 
     * {
@@ -23,9 +24,9 @@
     }
 
     body {
-      background-color: var(--bg-color);
+      background-color: var(--bg-dark);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -35,66 +36,72 @@
       position: relative;
     }
 
-    /* Improved Art - More Attractive Definition */
-    .art-wrapper {
+    /* Background Artwork Layer */
+    .bg-wrapper {
       position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1;
-      opacity: 0.8; /* Subtle transparency against deep black */
     }
 
-    .art-wrapper img {
+    .bg-wrapper img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      filter: brightness(0.82) contrast(1.05);
       pointer-events: none;
-      /* Adding a tiny 'shimmer' animation to make the bubbles pop */
-      animation: cuteShimmer 5s ease-in-out infinite;
     }
 
-    @keyframes cuteShimmer {
-      0%, 100% { filter: drop-shadow(0 0 10px rgba(255,141,240,0.1)); }
-      50% { filter: drop-shadow(0 0 15px rgba(255,141,240,0.25)); }
+    /* Vignette overlay to smooth out edge contrast */
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(5, 8, 17, 0.1) 0%, rgba(5, 8, 17, 0.75) 100%);
+      z-index: 2;
+      pointer-events: none;
     }
 
-    /* Main UI Layer */
+    /* Main Content Container */
     .content-container {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
       width: 100%;
-      max-width: 700px;
+      max-width: 620px;
       padding: 20px;
+      margin-top: 60px; /* Offset slightly to frame artwork nicely */
     }
 
-    /* Modern Glassmorphism Search Bar (Dark) */
+    /* Sleek Centered Search Bar */
+    .search-form {
+      width: 100%;
+    }
+
     .search-box {
       width: 100%;
-      background: rgba(12, 9, 14, 0.8); /* Dark search field */
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid var(--accent-soft); /* Violet border definition */
-      border-radius: 40px; /* Cutesy extra rounded */
+      background: rgba(8, 13, 26, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
       padding: 16px 30px;
-      box-shadow: 0 10px 40px var(--glow), 0 2px 8px rgba(0,0,0,0.4);
-      display: flex;
-      align-items: center;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--glow-blue);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .search-box:focus-within {
-      transform: scale(1.02);
-      box-shadow: 0 15px 50px rgba(186, 126, 255, 0.6);
-      border-color: var(--accent-cute); /* Pops to pink on focus */
+      transform: translateY(-2px) scale(1.01);
+      border-color: var(--accent-gold);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--glow-gold);
+      background: rgba(5, 8, 17, 0.9);
     }
 
     .search-box input {
@@ -105,112 +112,109 @@
       font-size: 1.15rem;
       color: var(--text-main);
       text-align: center;
-      font-weight: 500;
+      font-weight: 400;
+      letter-spacing: 0.5px;
     }
 
     .search-box input::placeholder {
       color: var(--text-sub);
-      opacity: 0.6;
-      letter-spacing: 0.5px;
+      opacity: 0.75;
     }
 
-    /* Links Grid (Dark Gloss) */
+    /* Quick Links Grid */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 14px;
       width: 100%;
     }
 
     .link-card {
       background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
-      padding: 14px 20px;
-      border-radius: 20px;
+      padding: 12px 18px;
+      border-radius: 18px;
       text-decoration: none;
       color: var(--text-main);
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 0.95rem;
       text-align: center;
-      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.25s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
 
-    /* Modern Pop/Glow on hover */
     .link-card:hover {
-      background: var(--bg-color); /* Deep black fill on hover */
-      border-color: var(--accent-cute); /* Pink border pops out */
-      color: var(--accent-cute);       /* Pink text on hover */
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(255, 141, 240, 0.4);
+      background: rgba(15, 23, 42, 0.85);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px var(--glow-blue);
     }
 
-    /* ANN Feed Widget (Dark Glass) */
+    /* ANN Live Feed Glass Widget */
     .feed-widget {
       position: absolute;
-      bottom: 30px;
-      right: 30px;
-      z-index: 2;
-      width: 340px;
+      bottom: 25px;
+      right: 25px;
+      z-index: 3;
+      width: 320px;
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       border: 1px solid var(--card-border);
-      border-radius: 22px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .feed-title {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--accent-soft); /* Soft purple title */
-      margin-bottom: 16px;
+      letter-spacing: 1.2px;
+      color: var(--accent-gold);
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    /* Red blinking "LIVE" dot */
-    .feed-title span:last-child {
-      font-size: 0.7rem; 
-      opacity: 0.7; 
-      background: rgba(255, 141, 240, 0.15);
-      color: var(--accent-cute);
-      padding: 3px 8px;
-      border-radius: 12px;
+    .feed-title .badge {
+      font-size: 0.65rem;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-gold);
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
     .feed-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .feed-item a {
       text-decoration: none;
       color: var(--text-sub);
-      font-size: 0.9rem;
-      line-height: 1.4;
+      font-size: 0.85rem;
+      line-height: 1.35;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      transition: color 0.2s ease, padding-left 0.2s ease;
+      transition: color 0.2s ease;
     }
 
     .feed-item a:hover {
-      color: var(--accent-cute); /* Hover to pink */
-      padding-left: 3px; /* Subtle 'bump' effect */
+      color: var(--accent-blue);
     }
 
     .feed-loading {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-sub);
       font-style: italic;
       text-align: center;
@@ -219,15 +223,18 @@
 </head>
 <body>
 
-  <!-- Background Artwork - More Defined defined definitions -->
-  <div class="art-wrapper">
-    <img src="https://i.ibb.co/sdFtdsqy/Rj-K0-NAXJCNi9-IVh-OAZq-T-0-YFYu3-bg-rmvd.png" alt="Lolifox background">
+  <!-- Background Layer -->
+  <div class="bg-wrapper">
+    <img src="bg.jpg" alt="Celestial Fox">
   </div>
+  <div class="bg-overlay"></div>
 
-  <!-- Center Content Layer -->
+  <!-- Central Search & Links Layer -->
   <div class="content-container">
-    <form class="search-box" action="https://duckduckgo.com/" method="get">
-      <input type="text" name="q" placeholder="Search..." autofocus autocomplete="off">
+    <form class="search-form" action="https://duckduckgo.com/" method="get">
+      <div class="search-box">
+        <input type="text" name="q" placeholder="Search..." autofocus autocomplete="off">
+      </div>
     </form>
 
     <div class="links-grid">
@@ -238,19 +245,18 @@
     </div>
   </div>
 
-  <!-- Live ANN RSS Feed Widget -->
+  <!-- ANN Live Feed Widget -->
   <div class="feed-widget">
     <div class="feed-title">
-      <span>Anime News Network</span>
-      <span>LIVE</span>
+      <span>Anime News</span>
+      <span class="badge">ANN</span>
     </div>
     <ul class="feed-list" id="ann-feed">
-      <li class="feed-loading">マスター、ロード中です... (Master, loading...)</li>
+      <li class="feed-loading">Loading news...</li>
     </ul>
   </div>
 
   <script>
-    // Live ANN feed fetching script (retained for functionality)
     async function fetchANNFeed() {
       const feedUrl = encodeURIComponent('https://www.animenewsnetwork.com/all/rss.xml');
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
@@ -262,19 +268,17 @@
 
         if (data.status === 'ok') {
           listElement.innerHTML = '';
-          // Render top 3 headlines
           data.items.slice(0, 3).forEach(item => {
             const li = document.createElement('li');
             li.className = 'feed-item';
-            // Render title as HTML to preserve any Japanese/styling if it exists
             li.innerHTML = `<a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>`;
             listElement.appendChild(li);
           });
         } else {
-          listElement.innerHTML = '<li class="feed-loading">Unable to load feed.</li>';
+          listElement.innerHTML = '<li class="feed-loading">Feed unavailable</li>';
         }
       } catch (err) {
-        listElement.innerHTML = '<li class="feed-loading">Error fetching news.</li>';
+        listElement.innerHTML = '<li class="feed-loading">Error loading feed</li>';
       }
     }
 
