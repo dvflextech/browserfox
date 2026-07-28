@@ -378,6 +378,21 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
 
+    /* Fallback Emoji/Icon Styling when no image is provided */
+    .feed-icon-fallback {
+      width: 64px;
+      height: 48px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.1);
+    }
+
     .feed-info {
       flex: 1;
       min-width: 0;
@@ -490,8 +505,7 @@
   </div>
 
   <script>
-    // Increment this revision number every time you update the code on GitHub to verify browser cache updates instantly
-    const BUILD_REVISION = 'rev-7-xml-robust-parsing';
+    const BUILD_REVISION = 'rev-8-smart-category-fallbacks';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -530,6 +544,43 @@
       });
       logDebug('Local storage feed cache cleared. Reloading page recommended.', 'success');
       alert('Feed cache cleared! Refresh the page to fetch fresh feeds.');
+    }
+
+    // Smart icon/emoji selector based on feed source & item text keywords
+    function getCategoryFallbackIcon(listId, title = '', description = '') {
+      const text = (title + ' ' + description).toLowerCase();
+
+      if (listId === 'list-nyaa') {
+        if (text.includes('batch') || text.includes('complete') || text.includes('1080p') || text.includes('bd')) return '📦';
+        if (text.includes('manga') || text.includes('chapter') || text.includes('volume') || text.includes('raw')) return '📖';
+        if (text.includes('music') || text.includes('ost') || text.includes('flac') || text.includes('mp3') || text.includes('single')) return '🎵';
+        if (text.includes('raw') || text.includes('tv')) return '📺';
+        return '🍥';
+      }
+
+      if (listId === 'list-pv') {
+        return '🎬';
+      }
+
+      if (listId === 'list-mal') {
+        if (text.includes('interview') || text.includes('creator') || text.includes('author')) return '🎤';
+        if (text.includes('manga') || text.includes('chapter') || text.includes('release')) return '📚';
+        if (text.includes('figure') || text.includes('merch') || text.includes('goods')) return '🛍️';
+        if (text.includes('movie') || text.includes('film') || text.includes('trailer')) return '🎞️';
+        return '🌸';
+      }
+
+      // Default ANN & general news keywords
+      if (text.includes('interview') || text.includes('talk')) return '🎙️';
+      if (text.includes('manga') || text.includes('novel') || text.includes('chapter')) return '📖';
+      if (text.includes('trailer') || text.includes('pv') || text.includes('promo') || text.includes('teaser')) return '🎬';
+      if (text.includes('figure') || text.includes('goods') || text.includes('merchandise') || text.includes('nendoroid')) return '✨';
+      if (text.includes('game') || text.includes('visual novel') || text.includes('rpg')) return '🎮';
+      if (text.includes('music') || text.includes('single') || text.includes('album') || text.includes('opening') || text.includes('ending')) return '🎵';
+      if (text.includes('delay') || text.includes('postpone') || text.includes('hiatus')) return '⚠️';
+      if (text.includes('cast') || text.includes('voice') || text.includes('staff') || text.includes('anime')) return '🍙';
+
+      return '🏮';
     }
 
     async function loadFeedWithCache(rssUrl, listId, maxItems = 7) {
@@ -593,7 +644,6 @@
         if (xmlDoc.querySelector('parsererror')) {
           logDebug(`[${listId}] Strict XML parse error detected. Attempting sanitization...`, 'warn');
           
-          // Fallback sanitization: Strip out potential HTML comments or malformed processing instructions before the root
           let cleanedText = rawText.trim();
           const firstTag = cleanedText.indexOf('<rss') !== -1 ? cleanedText.indexOf('<rss') : cleanedText.indexOf('<feed') !== -1 ? cleanedText.indexOf('<feed') : cleanedText.indexOf('<rdf');
           if (firstTag !== -1) {
@@ -606,7 +656,6 @@
           
           if (xmlDoc.querySelector('parsererror')) {
             logDebug(`[${listId}] XML strict parser failed. Falling back to HTML tolerance mode...`, 'warn');
-            // Final fallback: Parse using text/html to safely handle unescaped entities & broken rss syntax
             xmlDoc = parser.parseFromString(rawText, 'text/html');
           }
         }
@@ -638,18 +687,18 @@
 
           if (!title.trim() || !link.trim() || link === '#') return;
 
-          // If this is the Previews tab, filter for titles containing trailer/pv keywords to show actual video/promotional content
+          const description = item.querySelector('description, content, summary')?.textContent || '';
+
+          // If this is the Previews tab, filter for titles containing trailer/pv keywords
           if (listId === 'list-pv') {
             const lowerTitle = title.toLowerCase();
-            const lowerDesc = (item.querySelector('description, content, summary')?.textContent || '').toLowerCase();
+            const lowerDesc = description.toLowerCase();
             const hasVideoKeyword = lowerTitle.includes('trailer') || lowerTitle.includes('pv') || lowerTitle.includes('promo') || lowerTitle.includes('teaser') || lowerTitle.includes('video') ||
                                     lowerDesc.includes('trailer') || lowerDesc.includes('pv') || lowerDesc.includes('promo') || lowerDesc.includes('teaser');
             if (!hasVideoKeyword) return;
           }
 
-          const description = item.querySelector('description, content, summary')?.textContent || '';
           let thumbUrl = null;
-          
           const mediaContent = item.getElementsByTagNameNS('*', 'content')[0] || item.querySelector('media\\:content, content');
           if (mediaContent && mediaContent.getAttribute('url')) {
             thumbUrl = mediaContent.getAttribute('url');
@@ -666,7 +715,10 @@
             if (img && img.src) { thumbUrl = img.src; }
           }
 
-          parsedItems.push({ title, link, date, thumbUrl });
+          // Generate category fallback icon if no image thumbnail was found
+          const fallbackIcon = getCategoryFallbackIcon(listId, title, description);
+
+          parsedItems.push({ title, link, date, thumbUrl, fallbackIcon });
         });
 
         if (parsedItems.length > 0) {
@@ -701,10 +753,13 @@
         const li = document.createElement('li');
         li.className = 'feed-item';
         
-        let thumbHtml = item.thumbUrl ? `<img class="feed-thumb" src="${item.thumbUrl}" alt="" loading="lazy">` : '';
+        // Use real image if available, otherwise use the smart anime icon/emoji fallback box
+        let mediaHtml = item.thumbUrl 
+          ? `<img class="feed-thumb" src="${item.thumbUrl}" alt="" loading="lazy">` 
+          : `<div class="feed-icon-fallback" title="Category Icon">${item.fallbackIcon || '🏮'}</div>`;
 
         li.innerHTML = `
-          ${thumbHtml}
+          ${mediaHtml}
           <div class="feed-info">
             <a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>
             <div class="feed-meta">${item.date}</div>
@@ -714,7 +769,6 @@
       });
     }
 
-    // Print active build/revision badge instantly on startup
     window.addEventListener('DOMContentLoaded', () => {
       logDebug(`Startpage active layout loaded. Build Revision: [ ${BUILD_REVISION} ]`, 'success');
     });
