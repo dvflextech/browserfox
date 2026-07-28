@@ -78,13 +78,11 @@
       width: 100%;
       max-width: 680px;
       padding: 20px;
-      /* Shifts left to true-center the remaining visible viewport when drawer is open */
       transform: translateX(-220px);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     body.drawer-closed .content-container {
-      /* Dead center of the whole screen when drawer is closed */
       transform: translateX(0);
     }
 
@@ -391,32 +389,63 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    function extractThumbnail(item) {
-      if (item.thumbnail && item.thumbnail.length > 0) return item.thumbnail;
-      if (item.enclosure && item.enclosure.link) return item.enclosure.link;
-
-      const parser = new DOMParser();
-      const htmlDoc = parser.parseFromString(item.description || item.content || '', 'text/html');
-      const img = htmlDoc.querySelector('img');
-      if (img && img.src) return img.src;
-
-      return null;
-    }
-
-    async function fetchRSS(rssUrl, listId, maxItems = 7) {
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    // Direct parser for standard RSS XML to bypass rss2json caching/mapping limitations
+    async function fetchDirectRSS(rssUrl, listId, maxItems = 7) {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
       const listElement = document.getElementById(listId);
 
       try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(proxyUrl);
         const data = await response.json();
+        
+        if (!data.contents) {
+          listElement.innerHTML = '<li class="feed-loading">Feed unavailable.</li>';
+          return;
+        }
 
-        if (data.status === 'ok' && data.items.length > 0) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+        const items = xmlDoc.querySelectorAll('item');
+
+        if (items.length > 0) {
           listElement.innerHTML = '';
-          data.items.slice(0, maxItems).forEach(item => {
-            const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const thumbUrl = extractThumbnail(item);
-            
+          let count = 0;
+
+          for (let i = 0; i < items.length && count < maxItems; i++) {
+            const item = items[i];
+            const title = item.querySelector('title')?.textContent || 'Untitled';
+            const link = item.querySelector('link')?.textContent || '#';
+            const pubDateStr = item.querySelector('pubDate')?.textContent;
+            const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+            // Extract content/description for media & image scraping
+            const description = item.querySelector('description')?.textContent || '';
+            const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
+            const combinedHtml = description + ' ' + contentEncoded;
+
+            // Thumbnail extraction logic
+            let thumbUrl = null;
+
+            // 1. Check media:content or enclosure tags
+            const mediaContent = item.getElementsByTagNameNS('*', 'content')[0];
+            if (mediaContent && mediaContent.getAttribute('url')) {
+              thumbUrl = mediaContent.getAttribute('url');
+            } else {
+              const enclosure = item.querySelector('enclosure');
+              if (enclosure && enclosure.getAttribute('type')?.startsWith('image')) {
+                thumbUrl = enclosure.getAttribute('url');
+              }
+            }
+
+            // 2. Fallback to scraping first <img> tag inside description / encoded body
+            if (!thumbUrl && combinedHtml) {
+              const doc = parser.parseFromString(combinedHtml, 'text/html');
+              const img = doc.querySelector('img');
+              if (img && img.src) {
+                thumbUrl = img.src;
+              }
+            }
+
             const li = document.createElement('li');
             li.className = 'feed-item';
             
@@ -425,12 +454,13 @@
             li.innerHTML = `
               ${thumbHtml}
               <div class="feed-info">
-                <a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>
+                <a href="${link}" target="_blank" title="${title}">${title}</a>
                 <div class="feed-meta">${date}</div>
               </div>
             `;
             listElement.appendChild(li);
-          });
+            count++;
+          }
         } else {
           listElement.innerHTML = '<li class="feed-loading">Feed currently empty.</li>';
         }
@@ -439,13 +469,11 @@
       }
     }
 
-    // Initialize feeds
-    fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
-    fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
-    fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
-    
-    // Fixed: Swapped preview target to ANN's main news/feed endpoint or standard list to avoid empty reports array returns
-    fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
+    // Initialize feeds using direct CORS-proxied XML parsing to reliably grab thumbnails & avoid API caching
+    fetchDirectRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
+    fetchDirectRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
+    fetchDirectRSS('https://nyaa.si/?page=rss', 'list-nyaa');
+    fetchDirectRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
   </script>
 </body>
 </html>
