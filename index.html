@@ -214,7 +214,22 @@
       font-weight: 700;
       color: var(--accent-gold);
       letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
+    .clear-cache-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-main);
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .clear-cache-btn:hover { background: rgba(255,255,255,0.2); }
 
     .debug-logs {
       flex: 1;
@@ -417,7 +432,10 @@
   <!-- Left Debug Console Drawer -->
   <div class="debug-drawer">
     <div class="debug-toggle" onclick="toggleDebug()">DEBUG</div>
-    <div class="debug-header">FEED DIAGNOSTICS</div>
+    <div class="debug-header">
+      <span>FEED DIAGNOSTICS</span>
+      <button class="clear-cache-btn" onclick="clearFeedCache()">Clear Cache</button>
+    </div>
     <div class="debug-logs" id="debug-logs">
       <div class="log-entry">Console initialized. Ready for feed events...</div>
     </div>
@@ -486,13 +504,11 @@
     function toggleDrawer() {
       document.body.classList.toggle('drawer-closed');
       document.body.classList.toggle('drawer-open');
-      logDebug(`Right drawer toggled. State: ${document.body.classList.contains('drawer-closed') ? 'Closed' : 'Open'}`);
     }
 
     function toggleDebug() {
       document.body.classList.toggle('debug-open');
       document.body.classList.toggle('debug-closed');
-      logDebug(`Debug console toggled. State: ${document.body.classList.contains('debug-open') ? 'Open' : 'Closed'}`);
     }
 
     function switchTab(tabId) {
@@ -501,140 +517,171 @@
       
       event.target.classList.add('active');
       document.getElementById(tabId).classList.add('active');
-      logDebug(`Switched tab view to: ${tabId.toUpperCase()}`);
     }
 
-    async function fetchDirectRSS(rssUrl, listId, maxItems = 7) {
+    function clearFeedCache() {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('celestial_cache_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      logDebug('Local storage feed cache cleared. Reloading page recommended.', 'success');
+      alert('Feed cache cleared! Refresh the page to fetch fresh feeds.');
+    }
+
+    async function loadFeedWithCache(rssUrl, listId, maxItems = 7) {
       const listElement = document.getElementById(listId);
+      const cacheKey = `celestial_cache_${listId}`;
+      const cacheTimeKey = `${cacheKey}_time`;
       
-      // Multi-tier proxy fallback architecture to bypass downtime or network failures cleanly
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedTime = localStorage.getItem(cacheTimeKey);
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+
+      // 1. Use valid cache if under 24 hours old
+      if (cachedData && cachedTime && (Date.now() - parseInt(cachedTime, 10) < twentyFourHours)) {
+        logDebug(`[${listId}] Loaded from 24h browser cache successfully`, 'success');
+        renderItems(JSON.parse(cachedData), listId, maxItems);
+        return;
+      }
+
+      logDebug(`[${listId}] Cache expired, missing, or previously failed. Attempting fetch...`);
+
+      // 2. Fetch from network via proxy fallback strategy
       const proxies = [
-        (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url + (url.includes('?') ? '&' : '?') + '_cb=' + Date.now())}`,
+        (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
         (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
       ];
 
       let rawText = null;
-      let successProxy = null;
-
       for (let i = 0; i < proxies.length; i++) {
-        const targetFetchUrl = proxies[i](rssUrl);
         try {
-          logDebug(`Trying [${listId}] via proxy #${i + 1}...`);
-          const response = await fetch(targetFetchUrl);
-          
-          if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
+          const response = await fetch(proxies[i](rssUrl));
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           
           if (i === 0) {
             const data = await response.json();
-            if (data && data.contents) {
-              rawText = data.contents;
-              successProxy = 1;
-              break;
-            }
+            if (data && data.contents) { rawText = data.contents; break; }
           } else {
             rawText = await response.text();
-            if (rawText) {
-              successProxy = 2;
-              break;
-            }
+            if (rawText) { break; }
           }
         } catch (err) {
           logDebug(`[${listId}] Proxy #${i + 1} failed: ${err.message}`, 'warn');
         }
       }
 
+      // 3. Handle network failure (DO NOT cache error state; fall back to stale cache if available, or retry later)
       if (!rawText) {
-        logDebug(`[${listId}] All proxy endpoints failed. NetworkError / CORS block encountered.`, 'error');
-        listElement.innerHTML = '<li class="feed-loading">Connection error (Blocked).</li>';
+        logDebug(`[${listId}] Network/Proxy fetch failed. Not caching error.`, 'error');
+        if (cachedData) {
+          logDebug(`[${listId}] Falling back to older stale cached data due to network error.`, 'warn');
+          renderItems(JSON.parse(cachedData), listId, maxItems);
+        } else {
+          listElement.innerHTML = '<li class="feed-loading">Connection error. Retrying on next load...</li>';
+        }
         return;
       }
 
-      logDebug(`[${listId}] Successfully fetched via proxy #${successProxy}`, 'success');
-
+      // 4. Parse XML and validate contents before caching
       try {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(rawText, 'text/xml');
         
-        // Check for XML parsing syntax errors
-        const parseError = xmlDoc.querySelector('parsererror');
-        if (parseError) {
-          throw new Error('Invalid XML structure received from source');
+        if (xmlDoc.querySelector('parsererror')) {
+          throw new Error('Invalid XML format');
         }
 
         const items = xmlDoc.querySelectorAll('item');
-        logDebug(`[${listId}] Parsed ${items.length} XML items`, 'success');
+        const parsedItems = [];
 
-        if (items.length > 0) {
-          listElement.innerHTML = '';
-          let count = 0;
+        items.forEach(item => {
+          const title = item.querySelector('title')?.textContent || '';
+          const link = item.querySelector('link')?.textContent || '#';
+          const pubDateStr = item.querySelector('pubDate')?.textContent;
+          const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
-          for (let i = 0; i < items.length && count < maxItems; i++) {
-            const item = items[i];
-            const title = item.querySelector('title')?.textContent || 'Untitled';
-            const link = item.querySelector('link')?.textContent || '#';
-            const pubDateStr = item.querySelector('pubDate')?.textContent;
-            const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+          // Strict validation: Skip malformed entries missing valid titles or links (fixes empty/untitled entries)
+          if (!title.trim() || !link.trim() || link === '#') return;
 
-            const description = item.querySelector('description')?.textContent || '';
-            const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
-            const combinedHtml = description + ' ' + contentEncoded;
+          const description = item.querySelector('description')?.textContent || '';
+          const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
+          const combinedHtml = description + ' ' + contentEncoded;
 
-            let thumbUrl = null;
-
-            // 1. Check media:content or enclosure
-            const mediaContent = item.getElementsByTagNameNS('*', 'content')[0];
-            if (mediaContent && mediaContent.getAttribute('url')) {
-              thumbUrl = mediaContent.getAttribute('url');
-            } else {
-              const enclosure = item.querySelector('enclosure');
-              if (enclosure && enclosure.getAttribute('type')?.startsWith('image')) {
-                thumbUrl = enclosure.getAttribute('url');
-              }
+          let thumbUrl = null;
+          const mediaContent = item.getElementsByTagNameNS('*', 'content')[0];
+          if (mediaContent && mediaContent.getAttribute('url')) {
+            thumbUrl = mediaContent.getAttribute('url');
+          } else {
+            const enclosure = item.querySelector('enclosure');
+            if (enclosure && enclosure.getAttribute('type')?.startsWith('image')) {
+              thumbUrl = enclosure.getAttribute('url');
             }
-
-            // 2. Fallback to scraping first <img> tag inside CDATA/HTML description bodies
-            if (!thumbUrl && combinedHtml) {
-              const doc = parser.parseFromString(combinedHtml, 'text/html');
-              const img = doc.querySelector('img');
-              if (img && img.src) {
-                thumbUrl = img.src;
-              }
-            }
-
-            const li = document.createElement('li');
-            li.className = 'feed-item';
-            
-            let thumbHtml = thumbUrl ? `<img class="feed-thumb" src="${thumbUrl}" alt="" loading="lazy">` : '';
-
-            li.innerHTML = `
-              ${thumbHtml}
-              <div class="feed-info">
-                <a href="${link}" target="_blank" title="${title}">${title}</a>
-                <div class="feed-meta">${date}</div>
-              </div>
-            `;
-            listElement.appendChild(li);
-            count++;
           }
-          logDebug(`[${listId}] Rendered ${count} items with thumbnails`, 'success');
+
+          if (!thumbUrl && combinedHtml) {
+            const doc = parser.parseFromString(combinedHtml, 'text/html');
+            const img = doc.querySelector('img');
+            if (img && img.src) { thumbUrl = img.src; }
+          }
+
+          parsedItems.push({ title, link, date, thumbUrl });
+        });
+
+        // 5. Ensure we only cache successfully parsed valid items (prevents caching empty/broken payloads)
+        if (parsedItems.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(parsedItems));
+          localStorage.setItem(cacheTimeKey, Date.now().toString());
+          
+          renderItems(parsedItems, listId, maxItems);
+          logDebug(`[${listId}] Successfully cached ${parsedItems.length} valid items for 24 hours`, 'success');
         } else {
-          logDebug(`[${listId}] Zero items found inside XML`, 'warn');
-          listElement.innerHTML = '<li class="feed-loading">Feed currently empty.</li>';
+          logDebug(`[${listId}] Parsed zero valid items. Cache skipped to allow future retry.`, 'warn');
+          if (cachedData) {
+            renderItems(JSON.parse(cachedData), listId, maxItems);
+          } else {
+            listElement.innerHTML = '<li class="feed-loading">Feed temporarily unavailable.</li>';
+          }
         }
       } catch (parseErr) {
-        logDebug(`[${listId}] Parse Error: ${parseErr.message}`, 'error');
-        listElement.innerHTML = '<li class="feed-loading">Parsing error.</li>';
+        logDebug(`[${listId}] Parsing error: ${parseErr.message}. Cache skipped.`, 'error');
+        if (cachedData) {
+          renderItems(JSON.parse(cachedData), listId, maxItems);
+        } else {
+          listElement.innerHTML = '<li class="feed-loading">Parsing error.</li>';
+        }
       }
     }
 
-    // Set initial drawer state class
+    function renderItems(items, listId, maxItems) {
+      const listElement = document.getElementById(listId);
+      listElement.innerHTML = '';
+      
+      items.slice(0, maxItems).forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'feed-item';
+        
+        let thumbHtml = item.thumbUrl ? `<img class="feed-thumb" src="${item.thumbUrl}" alt="" loading="lazy">` : '';
+
+        li.innerHTML = `
+          ${thumbHtml}
+          <div class="feed-info">
+            <a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>
+            <div class="feed-meta">${item.date}</div>
+          </div>
+        `;
+        listElement.appendChild(li);
+      });
+    }
+
+    // Set initial drawer state
     document.body.classList.add('drawer-open');
 
-    // Initialize feeds with multi-proxy redundancy
-    fetchDirectRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
-    fetchDirectRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
-    fetchDirectRSS('https://nyaa.si/?page=rss', 'list-nyaa');
-    fetchDirectRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
+    // Initialize feeds with resilient 24-hour error-safe caching
+    loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
+    loadFeedWithCache('https://myanimelist.net/rss/news.xml', 'list-mal');
+    loadFeedWithCache('https://nyaa.si/?page=rss', 'list-nyaa');
+    loadFeedWithCache('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
   </script>
 </body>
 </html>
