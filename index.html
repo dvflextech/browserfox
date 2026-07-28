@@ -39,22 +39,15 @@
       position: relative;
     }
 
-    /* Background Artwork - Optimized for Ultrawide */
+    /* Background Artwork - Pure CSS Background Property optimized for Ultrawide */
     .bg-wrapper {
       position: absolute;
       inset: 0;
       z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .bg-wrapper img {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      object-position: center 30%;
+      background-image: url('bg.jpg');
+      background-size: cover;
+      background-position: center 30%;
+      background-repeat: no-repeat;
       filter: brightness(0.85) contrast(1.08);
       animation: ambientPulse 8s ease-in-out infinite alternate;
     }
@@ -439,7 +432,7 @@
 </head>
 <body class="debug-closed">
 
-  <div class="bg-wrapper"><img src="bg.jpg" alt="Celestial Fox"></div>
+  <div class="bg-wrapper"></div>
   <div class="bg-overlay"></div>
 
   <!-- Left Debug Console Drawer -->
@@ -503,7 +496,7 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-10-icon-grid';
+    const BUILD_REVISION = 'rev-11-css-bg';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
