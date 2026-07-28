@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Celestial Fox Startpage</title>
   <style>
-    /* Celestial Blue & Gold Palette with Extra Pop */
+    /* Celestial Blue & Gold Palette with Live Widgets */
     :root {
       --bg-dark: #03050c;
       --card-bg: rgba(8, 14, 30, 0.7);
@@ -73,6 +73,57 @@
       pointer-events: none;
     }
 
+    /* Top-Right Widget Hub (Clock & Weather) */
+    .top-right-hub {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      z-index: 3;
+      display: flex;
+      gap: 12px;
+    }
+
+    .hub-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      padding: 10px 16px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+
+    .hub-time {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .hub-date {
+      font-size: 0.75rem;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hub-weather {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hub-weather-sub {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+    }
+
     /* Main Container */
     .content-container {
       position: relative;
@@ -127,7 +178,7 @@
       opacity: 0.7;
     }
 
-    /* Expanded Links Grid (Two Rows) */
+    /* Links Grid (Two Rows) */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -251,6 +302,18 @@
   </div>
   <div class="bg-overlay"></div>
 
+  <!-- Top-Right Widget Hub (Clock & Live Weather) -->
+  <div class="top-right-hub">
+    <div class="hub-card">
+      <div class="hub-time" id="clock-time">--:--</div>
+      <div class="hub-date" id="clock-date">Loading...</div>
+    </div>
+    <div class="hub-card" id="weather-card">
+      <div class="hub-weather" id="weather-temp">--°C</div>
+      <div class="hub-weather-sub" id="weather-condition">Checking weather...</div>
+    </div>
+  </div>
+
   <!-- Central Search & Expanded Links Layer -->
   <div class="content-container">
     <form class="search-form" action="https://duckduckgo.com/" method="get">
@@ -283,6 +346,61 @@
   </div>
 
   <script>
+    // Live Clock Script
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      
+      document.getElementById('clock-time').textContent = `${hours}:${minutes} ${ampm}`;
+      
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Geolocation & Live Weather Script (Open-Meteo API - Free, No Key Required)
+    async function fetchWeather() {
+      if (!navigator.geolocation) {
+        document.getElementById('weather-condition').textContent = 'Location unavailable';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          const tempC = Math.round(data.current.temperature_2m);
+          const tempF = Math.round((tempC * 9/5) + 32);
+          const code = data.current.weather_code;
+
+          // Simple weather code mapping
+          let condition = 'Clear';
+          if (code >= 1 && code <= 3) condition = 'Partly Cloudy';
+          else if (code >= 45 && code <= 48) condition = 'Foggy';
+          else if (code >= 51 && code <= 67) condition = 'Rainy';
+          else if (code >= 71 && code <= 77) condition = 'Snowy';
+          else if (code >= 95) condition = 'Stormy';
+
+          document.getElementById('weather-temp').textContent = `${tempC}°C / ${tempF}°F`;
+          document.getElementById('weather-condition').textContent = condition;
+        } catch (e) {
+          document.getElementById('weather-condition').textContent = 'Weather error';
+        }
+      }, () => {
+        document.getElementById('weather-condition').textContent = 'Location denied';
+      });
+    }
+    fetchWeather();
+
+    // Live ANN RSS Feed Script
     async function fetchANNFeed() {
       const feedUrl = encodeURIComponent('https://www.animenewsnetwork.com/all/rss.xml');
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
