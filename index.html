@@ -37,7 +37,7 @@
       position: relative;
     }
 
-    /* Background Artwork */
+    /* Background Artwork - Optimized for Ultrawide */
     .bg-wrapper {
       position: absolute;
       inset: 0;
@@ -45,19 +45,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
     .bg-wrapper img {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       object-fit: cover;
+      object-position: center 30%;
       filter: brightness(0.85) contrast(1.08);
       animation: ambientPulse 8s ease-in-out infinite alternate;
     }
 
     @keyframes ambientPulse {
       0% { transform: scale(1); filter: brightness(0.85) contrast(1.08); }
-      100% { transform: scale(1.03); filter: brightness(0.92) contrast(1.12); }
+      100% { transform: scale(1.02); filter: brightness(0.92) contrast(1.12); }
     }
 
     .bg-overlay {
@@ -65,9 +67,10 @@
       inset: 0;
       background: radial-gradient(circle at center, rgba(3, 5, 12, 0.2) 0%, rgba(3, 5, 12, 0.82) 100%);
       z-index: 2;
+      pointer-events: none;
     }
 
-    /* Main Container - Balances viewport dynamically when drawers open/close */
+    /* Main Container - Centered stably without shifting */
     .content-container {
       position: relative;
       z-index: 3;
@@ -78,14 +81,7 @@
       width: 100%;
       max-width: 680px;
       padding: 20px;
-      transform: translateX(0px);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
-    /* Dynamic Offset Logic for Left and Right Drawers */
-    body.debug-open.drawer-closed .content-container { transform: translateX(180px); }
-    body.drawer-open.debug-closed .content-container { transform: translateX(-220px); }
-    body.drawer-open.debug-open .content-container { transform: translateX(0px); }
 
     /* Dynamic Search Bar */
     .search-form { width: 100%; }
@@ -378,7 +374,6 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
 
-    /* Fallback Emoji/Icon Styling when no image is provided */
     .feed-icon-fallback {
       width: 64px;
       height: 48px;
@@ -505,7 +500,7 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-8-smart-category-fallbacks';
+    const BUILD_REVISION = 'rev-9-ultrawide-layout-fix';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -546,7 +541,6 @@
       alert('Feed cache cleared! Refresh the page to fetch fresh feeds.');
     }
 
-    // Smart icon/emoji selector based on feed source & item text keywords
     function getCategoryFallbackIcon(listId, title = '', description = '') {
       const text = (title + ' ' + description).toLowerCase();
 
@@ -570,7 +564,6 @@
         return '🌸';
       }
 
-      // Default ANN & general news keywords
       if (text.includes('interview') || text.includes('talk')) return '🎙️';
       if (text.includes('manga') || text.includes('novel') || text.includes('chapter')) return '📖';
       if (text.includes('trailer') || text.includes('pv') || text.includes('promo') || text.includes('teaser')) return '🎬';
@@ -689,7 +682,6 @@
 
           const description = item.querySelector('description, content, summary')?.textContent || '';
 
-          // If this is the Previews tab, filter for titles containing trailer/pv keywords
           if (listId === 'list-pv') {
             const lowerTitle = title.toLowerCase();
             const lowerDesc = description.toLowerCase();
@@ -715,7 +707,6 @@
             if (img && img.src) { thumbUrl = img.src; }
           }
 
-          // Generate category fallback icon if no image thumbnail was found
           const fallbackIcon = getCategoryFallbackIcon(listId, title, description);
 
           parsedItems.push({ title, link, date, thumbUrl, fallbackIcon });
@@ -753,7 +744,6 @@
         const li = document.createElement('li');
         li.className = 'feed-item';
         
-        // Use real image if available, otherwise use the smart anime icon/emoji fallback box
         let mediaHtml = item.thumbUrl 
           ? `<img class="feed-thumb" src="${item.thumbUrl}" alt="" loading="lazy">` 
           : `<div class="feed-icon-fallback" title="Category Icon">${item.fallbackIcon || '🏮'}</div>`;
