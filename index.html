@@ -464,7 +464,7 @@
   <div class="drawer">
     <div class="drawer-toggle" onclick="toggleDrawer()">UPDATES</div>
     
-    <div class="tabs-header">
+    <div class="tabs-header">g
       <button class="tab-btn active" onclick="switchTab('ann')">ANN</button>
       <button class="tab-btn" onclick="switchTab('mal')">MAL</button>
       <button class="tab-btn" onclick="switchTab('nyaa')">NYAA</button>
@@ -584,10 +584,16 @@
 
       try {
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(rawText, 'text/xml');
+        let xmlDoc = parser.parseFromString(rawText, 'text/xml');
         
+        // Handle malformed/HTML-wrapped XML payloads gracefully instead of hard-failing
         if (xmlDoc.querySelector('parsererror')) {
-          throw new Error('Invalid XML structure received from source');
+          logDebug(`[${listId}] Strict XML parse error detected. Attempting sanitization...`, 'warn');
+          const cleanedText = rawText.trim().replace(/^[^<]*/, '');
+          xmlDoc = parser.parseFromString(cleanedText, 'text/xml');
+          if (xmlDoc.querySelector('parsererror')) {
+            throw new Error('Invalid XML structure received from source');
+          }
         }
 
         const items = xmlDoc.querySelectorAll('item, report, entry');
@@ -684,11 +690,11 @@
 
     document.body.classList.add('drawer-open');
 
-    // Updated Previews feed with standard ANN News feed endpoint to correctly parse items/trailers
+    // Using ANN's reliable main RSS feed filtered dynamically for trailer updates, with robust XML sanitization fallback
     loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     loadFeedWithCache('https://myanimelist.net/rss/news.xml', 'list-mal');
     loadFeedWithCache('https://nyaa.si/?page=rss', 'list-nyaa');
-    loadFeedWithCache('https://www.animenewsnetwork.com/newsfeed/rss.xml?tag=trailer', 'list-pv');
+    loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-pv');
   </script>
 </body>
 </html>
