@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Celestial Fox Startpage</title>
-  <!-- FontAwesome for Minimalist Website Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Celestial Palette */
     :root {
@@ -114,7 +112,7 @@
       opacity: 0.7;
     }
 
-    /* Links Grid - Configured for compact Icons */
+    /* Links Grid - Configured for compact Favicons */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -129,21 +127,31 @@
       padding: 14px 0;
       border-radius: 16px;
       text-decoration: none;
-      color: var(--text-main);
-      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
+    .link-card img.site-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      transition: transform 0.25s ease;
+    }
+
+    .link-card:hover img.site-icon {
+      transform: scale(1.15);
+    }
+
     .link-card:hover {
       background: rgba(15, 23, 42, 0.9);
       transform: translateY(-4px);
     }
-    .link-card.gold:hover { border-color: var(--accent-gold); color: var(--accent-gold); box-shadow: 0 10px 30px var(--glow-gold); }
-    .link-card.pink:hover { border-color: var(--accent-pink); color: var(--accent-pink); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4); }
-    .link-card.blue:hover { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 10px 30px var(--glow-blue); }
+    .link-card.gold:hover { border-color: var(--accent-gold); box-shadow: 0 10px 30px var(--glow-gold); }
+    .link-card.pink:hover { border-color: var(--accent-pink); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4); }
+    .link-card.blue:hover { border-color: var(--accent-blue); box-shadow: 0 10px 30px var(--glow-blue); }
 
     /* Left Debug Console Drawer */
     .debug-drawer {
@@ -455,14 +463,14 @@
       </div>
     </form>
     <div class="links-grid">
-      <a href="https://nyaa.si" class="link-card blue" title="Nyaa"><i class="fa-solid fa-fish"></i></a>
-      <a href="https://anilist.co" class="link-card gold" title="AniList"><i class="fa-solid fa-book-open"></i></a>
-      <a href="https://myanimelist.net" class="link-card blue" title="MAL"><i class="fa-solid fa-tv"></i></a>
-      <a href="https://www.youtube.com" class="link-card pink" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
-      <a href="https://www.twitch.tv" class="link-card pink" title="Twitch"><i class="fa-brands fa-twitch"></i></a>
-      <a href="https://reddit.com" class="link-card blue" title="Reddit"><i class="fa-brands fa-reddit-alien"></i></a>
-      <a href="https://sukebei.nyaa.si" class="link-card pink" title="Sukebei"><i class="fa-solid fa-fire"></i></a>
-      <a href="https://imdb.com" class="link-card gold" title="IMDb"><i class="fa-solid fa-film"></i></a>
+      <a href="https://nyaa.si" class="link-card blue" title="Nyaa"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=nyaa.si&sz=64" alt="Nyaa"></a>
+      <a href="https://anilist.co" class="link-card gold" title="AniList"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=anilist.co&sz=64" alt="AniList"></a>
+      <a href="https://myanimelist.net" class="link-card blue" title="MAL"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=myanimelist.net&sz=64" alt="MAL"></a>
+      <a href="https://www.youtube.com" class="link-card pink" title="YouTube"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=youtube.com&sz=64" alt="YouTube"></a>
+      <a href="https://www.twitch.tv" class="link-card pink" title="Twitch"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=twitch.tv&sz=64" alt="Twitch"></a>
+      <a href="https://reddit.com" class="link-card blue" title="Reddit"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=reddit.com&sz=64" alt="Reddit"></a>
+      <a href="https://sukebei.nyaa.si" class="link-card pink" title="Sukebei"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=sukebei.nyaa.si&sz=64" alt="Sukebei"></a>
+      <a href="https://imdb.com" class="link-card gold" title="IMDb"><img class="site-icon" src="https://www.google.com/s2/favicons?domain=imdb.com&sz=64" alt="IMDb"></a>
     </div>
   </div>
 
@@ -496,7 +504,7 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-11-css-bg';
+    const BUILD_REVISION = 'rev-12-local-favicons';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
