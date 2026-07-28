@@ -547,17 +547,19 @@
 
       logDebug(`[${listId}] Cache expired, missing, or previously failed. Attempting fetch...`);
 
-      // 2. Fetch from network via proxy fallback strategy
+      // Expanded CORS proxy fallback tier (allorigins JSON, corsproxy text, codetabs text)
       const proxies = [
         (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+        (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
       ];
 
       let rawText = null;
       for (let i = 0; i < proxies.length; i++) {
         try {
+          logDebug(`Trying [${listId}] via proxy #${i + 1}...`);
           const response = await fetch(proxies[i](rssUrl));
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
           
           if (i === 0) {
             const data = await response.json();
@@ -571,40 +573,52 @@
         }
       }
 
-      // 3. Handle network failure (DO NOT cache error state; fall back to stale cache if available, or retry later)
       if (!rawText) {
-        logDebug(`[${listId}] Network/Proxy fetch failed. Not caching error.`, 'error');
+        logDebug(`[${listId}] All proxy endpoints failed. Network/CORS block.`, 'error');
         if (cachedData) {
-          logDebug(`[${listId}] Falling back to older stale cached data due to network error.`, 'warn');
+          logDebug(`[${listId}] Falling back to stale cached data.`, 'warn');
           renderItems(JSON.parse(cachedData), listId, maxItems);
         } else {
-          listElement.innerHTML = '<li class="feed-loading">Connection error. Retrying on next load...</li>';
+          listElement.innerHTML = '<li class="feed-loading">Connection error (Blocked). Retrying next load...</li>';
         }
         return;
       }
 
-      // 4. Parse XML and validate contents before caching
       try {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(rawText, 'text/xml');
         
         if (xmlDoc.querySelector('parsererror')) {
-          throw new Error('Invalid XML format');
+          throw new Error('Invalid XML structure received from source');
         }
 
-        const items = xmlDoc.querySelectorAll('item');
+        // Handle ANN report endpoints specifically where entries might be under different tags or structure
+        const items = xmlDoc.querySelectorAll('item, report, entry');
+        logDebug(`[${listId}] Parsed ${items.length} XML entries`, 'success');
+
         const parsedItems = [];
 
         items.forEach(item => {
           const title = item.querySelector('title')?.textContent || '';
-          const link = item.querySelector('link')?.textContent || '#';
-          const pubDateStr = item.querySelector('pubDate')?.textContent;
+          
+          // Fallback extraction for links if standard <link> tag is missing or empty
+          let link = item.querySelector('link')?.textContent || '';
+          if (!link.trim()) {
+            const guid = item.querySelector('guid')?.textContent;
+            if (guid && guid.startsWith('http')) link = guid;
+          }
+          if (!link.trim()) {
+            const comments = item.querySelector('comments')?.textContent;
+            if (comments && comments.startsWith('http')) link = comments;
+          }
+
+          const pubDateStr = item.querySelector('pubDate, date, dc\\:date')?.textContent;
           const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
-          // Strict validation: Skip malformed entries missing valid titles or links (fixes empty/untitled entries)
+          // Skip malformed entries missing titles or valid links
           if (!title.trim() || !link.trim() || link === '#') return;
 
-          const description = item.querySelector('description')?.textContent || '';
+          const description = item.querySelector('description, content')?.textContent || '';
           const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
           const combinedHtml = description + ' ' + contentEncoded;
 
@@ -628,23 +642,22 @@
           parsedItems.push({ title, link, date, thumbUrl });
         });
 
-        // 5. Ensure we only cache successfully parsed valid items (prevents caching empty/broken payloads)
         if (parsedItems.length > 0) {
           localStorage.setItem(cacheKey, JSON.stringify(parsedItems));
           localStorage.setItem(cacheTimeKey, Date.now().toString());
           
           renderItems(parsedItems, listId, maxItems);
-          logDebug(`[${listId}] Successfully cached ${parsedItems.length} valid items for 24 hours`, 'success');
+          logDebug(`[${listId}] Successfully cached ${parsedItems.length} items for 24 hours`, 'success');
         } else {
-          logDebug(`[${listId}] Parsed zero valid items. Cache skipped to allow future retry.`, 'warn');
+          logDebug(`[${listId}] Zero valid items found after parsing. Cache skipped.`, 'warn');
           if (cachedData) {
             renderItems(JSON.parse(cachedData), listId, maxItems);
           } else {
-            listElement.innerHTML = '<li class="feed-loading">Feed temporarily unavailable.</li>';
+            listElement.innerHTML = '<li class="feed-loading">Feed currently empty.</li>';
           }
         }
       } catch (parseErr) {
-        logDebug(`[${listId}] Parsing error: ${parseErr.message}. Cache skipped.`, 'error');
+        logDebug(`[${listId}] Parse Error: ${parseErr.message}. Cache skipped.`, 'error');
         if (cachedData) {
           renderItems(JSON.parse(cachedData), listId, maxItems);
         } else {
@@ -677,7 +690,7 @@
     // Set initial drawer state
     document.body.classList.add('drawer-open');
 
-    // Initialize feeds with resilient 24-hour error-safe caching
+    // Initialize feeds with resilient 24-hour error-safe caching & proxy fallback expansion
     loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     loadFeedWithCache('https://myanimelist.net/rss/news.xml', 'list-mal');
     loadFeedWithCache('https://nyaa.si/?page=rss', 'list-nyaa');
