@@ -7,8 +7,8 @@
     /* Celestial Palette */
     :root {
       --bg-dark: #03050c;
-      --card-bg: rgba(8, 14, 30, 0.7);
-      --card-border: rgba(56, 189, 248, 0.2); 
+      --card-bg: rgba(8, 14, 30, 0.75);
+      --card-border: rgba(56, 189, 248, 0.25); 
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
       --accent-gold: #fbbf24;
@@ -63,11 +63,11 @@
     .bg-overlay {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 12, 0.8) 100%);
+      background: radial-gradient(circle at center, rgba(3, 5, 12, 0.2) 0%, rgba(3, 5, 12, 0.82) 100%);
       z-index: 2;
     }
 
-    /* Main Container */
+    /* Main Container - Shifts smoothly when drawer defaults open */
     .content-container {
       position: relative;
       z-index: 3;
@@ -76,13 +76,14 @@
       align-items: center;
       gap: 20px;
       width: 100%;
-      max-width: 720px;
+      max-width: 680px;
       padding: 20px;
+      transform: translateX(-120px);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    body.drawer-open .content-container {
-      transform: translateX(-100px);
+    body.drawer-closed .content-container {
+      transform: translateX(0);
     }
 
     /* Dynamic Search Bar */
@@ -90,9 +91,9 @@
 
     .search-box {
       width: 100%;
-      background: rgba(6, 11, 24, 0.8);
+      background: rgba(6, 11, 24, 0.85);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      border: 1px solid rgba(56, 189, 248, 0.35);
       border-radius: 50px;
       padding: 16px 32px;
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 25px var(--glow-blue);
@@ -151,27 +152,27 @@
     .link-card.pink:hover { border-color: var(--accent-pink); color: var(--accent-pink); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4); }
     .link-card.blue:hover { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 10px 30px var(--glow-blue); }
 
-    /* Collapsible Drawer */
+    /* Collapsible Drawer (Defaults Open) */
     .drawer {
       position: absolute;
-      right: -360px;
+      right: 0;
       top: 2%;
       height: 96%;
-      width: 360px;
-      background: rgba(8, 14, 30, 0.85);
+      width: 400px; /* Wider for easier reading */
+      background: rgba(6, 10, 22, 0.88);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
       border-left: 1px solid var(--card-border);
       border-radius: 24px 0 0 24px;
       z-index: 10;
       transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+      box-shadow: -15px 0 50px rgba(0,0,0,0.65);
       display: flex;
       flex-direction: column;
     }
 
-    body.drawer-open .drawer {
-      right: 0;
+    body.drawer-closed .drawer {
+      right: -400px;
     }
 
     /* Drawer Toggle Button */
@@ -182,7 +183,7 @@
       transform: translateY(-50%);
       width: 44px;
       height: 100px;
-      background: rgba(8, 14, 30, 0.85);
+      background: rgba(6, 10, 22, 0.88);
       backdrop-filter: blur(15px);
       border: 1px solid var(--card-border);
       border-right: none;
@@ -219,7 +220,7 @@
       border: none;
       color: var(--text-sub);
       padding: 10px 0;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
       border-bottom: 2px solid transparent;
@@ -238,7 +239,7 @@
     /* Tab Content Panels */
     .tab-content {
       flex: 1;
-      padding: 20px;
+      padding: 24px;
       overflow-y: auto;
       display: none;
     }
@@ -251,12 +252,12 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
 
     .feed-item {
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
     .feed-item:last-child {
@@ -266,15 +267,15 @@
     .feed-item a {
       text-decoration: none;
       color: var(--text-main);
-      font-size: 0.9rem;
-      line-height: 1.4;
+      font-size: 0.95rem; /* Larger for readability */
+      line-height: 1.45;
       font-weight: 500;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       transition: color 0.2s ease;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .feed-item a:hover {
@@ -285,21 +286,23 @@
     .tab-content#mal .feed-item a:hover { color: var(--accent-gold); }
 
     .feed-meta {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--text-sub);
+      opacity: 0.85;
     }
 
     .feed-loading {
       text-align: center;
       color: var(--text-sub);
       font-style: italic;
-      font-size: 0.9rem;
-      margin-top: 20px;
+      font-size: 0.95rem;
+      margin-top: 30px;
     }
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
   </style>
 </head>
 <body>
@@ -326,7 +329,7 @@
     </div>
   </div>
 
-  <!-- Collapsible Updates Drawer -->
+  <!-- Collapsible Updates Drawer (Defaults Open) -->
   <div class="drawer">
     <div class="drawer-toggle" onclick="toggleDrawer()">UPDATES</div>
     
@@ -356,8 +359,9 @@
   </div>
 
   <script>
+    // Note: No class on body means drawer starts open by default. Clicking toggle adds 'drawer-closed'.
     function toggleDrawer() {
-      document.body.classList.toggle('drawer-open');
+      document.body.classList.toggle('drawer-closed');
     }
 
     function switchTab(tabId) {
@@ -368,7 +372,7 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    async function fetchRSS(rssUrl, listId, maxItems = 8) {
+    async function fetchRSS(rssUrl, listId, maxItems = 7) {
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
       const listElement = document.getElementById(listId);
 
@@ -379,7 +383,7 @@
         if (data.status === 'ok') {
           listElement.innerHTML = '';
           data.items.slice(0, maxItems).forEach(item => {
-            const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             const li = document.createElement('li');
             li.className = 'feed-item';
             li.innerHTML = `
@@ -389,19 +393,17 @@
             listElement.appendChild(li);
           });
         } else {
-          listElement.innerHTML = '<li class="live-loading">Feed unavailable.</li>';
+          listElement.innerHTML = '<li class="feed-loading">Feed unavailable.</li>';
         }
       } catch (err) {
-        listElement.innerHTML = '<li class="live-loading">Connection error.</li>';
+        listElement.innerHTML = '<li class="feed-loading">Connection error.</li>';
       }
     }
 
-    // Load active working feeds
+    // Initialize feeds
     fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
     fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
-    
-        // Using an anime promotion / trailers news vector instead of a fragile direct yt channel ID link
     fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155&n=50', 'list-pv');
   </script>
 </body>
