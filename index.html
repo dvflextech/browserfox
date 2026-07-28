@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Celestial Fox Startpage</title>
+  <!-- FontAwesome for Minimalist Website Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Celestial Palette */
     :root {
@@ -79,7 +81,7 @@
       align-items: center;
       gap: 20px;
       width: 100%;
-      max-width: 680px;
+      max-width: 520px;
       padding: 20px;
     }
 
@@ -119,7 +121,7 @@
       opacity: 0.7;
     }
 
-    /* Links Grid */
+    /* Links Grid - Configured for compact Icons */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -131,13 +133,14 @@
       background: var(--card-bg);
       backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
-      padding: 12px 14px;
+      padding: 14px 0;
       border-radius: 16px;
       text-decoration: none;
       color: var(--text-main);
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-align: center;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
@@ -459,14 +462,14 @@
       </div>
     </form>
     <div class="links-grid">
-      <a href="https://nyaa.si" class="link-card blue">Nyaa</a>
-      <a href="https://anilist.co" class="link-card gold">AniList</a>
-      <a href="https://myanimelist.net" class="link-card blue">MAL</a>
-      <a href="https://www.youtube.com" class="link-card pink">YouTube</a>
-      <a href="https://www.twitch.tv" class="link-card pink">Twitch</a>
-      <a href="https://reddit.com" class="link-card blue">Reddit</a>
-      <a href="https://sukebei.nyaa.si" class="link-card pink">Sukebei</a>
-      <a href="https://imdb.com" class="link-card gold">IMDb</a>
+      <a href="https://nyaa.si" class="link-card blue" title="Nyaa"><i class="fa-solid fa-fish"></i></a>
+      <a href="https://anilist.co" class="link-card gold" title="AniList"><i class="fa-solid fa-book-open"></i></a>
+      <a href="https://myanimelist.net" class="link-card blue" title="MAL"><i class="fa-solid fa-tv"></i></a>
+      <a href="https://www.youtube.com" class="link-card pink" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+      <a href="https://www.twitch.tv" class="link-card pink" title="Twitch"><i class="fa-brands fa-twitch"></i></a>
+      <a href="https://reddit.com" class="link-card blue" title="Reddit"><i class="fa-brands fa-reddit-alien"></i></a>
+      <a href="https://sukebei.nyaa.si" class="link-card pink" title="Sukebei"><i class="fa-solid fa-fire"></i></a>
+      <a href="https://imdb.com" class="link-card gold" title="IMDb"><i class="fa-solid fa-film"></i></a>
     </div>
   </div>
 
@@ -500,7 +503,7 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-9-ultrawide-layout-fix';
+    const BUILD_REVISION = 'rev-10-icon-grid';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
