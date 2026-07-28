@@ -491,7 +491,7 @@
 
   <script>
     // Increment this revision number every time you update the code on GitHub to verify browser cache updates instantly
-    const BUILD_REVISION = 'rev-5-video-feed-fixed';
+    const BUILD_REVISION = 'rev-6-proxy-rotation';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -552,7 +552,8 @@
       const proxies = [
         (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
         (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        (url) => `https://thingproxy.freeboard.io/fetch/${url}`
       ];
 
       let rawText = null;
