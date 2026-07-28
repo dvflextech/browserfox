@@ -538,7 +538,6 @@
       const cachedTime = localStorage.getItem(cacheTimeKey);
       const twentyFourHours = 24 * 60 * 60 * 1000;
 
-      // 1. Use valid cache if under 24 hours old
       if (cachedData && cachedTime && (Date.now() - parseInt(cachedTime, 10) < twentyFourHours)) {
         logDebug(`[${listId}] Loaded from 24h browser cache successfully`, 'success');
         renderItems(JSON.parse(cachedData), listId, maxItems);
@@ -547,7 +546,6 @@
 
       logDebug(`[${listId}] Cache expired, missing, or previously failed. Attempting fetch...`);
 
-      // Expanded CORS proxy fallback tier (allorigins JSON, corsproxy text, codetabs text)
       const proxies = [
         (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
         (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
@@ -592,7 +590,6 @@
           throw new Error('Invalid XML structure received from source');
         }
 
-        // Handle ANN report endpoints specifically where entries might be under different tags or structure
         const items = xmlDoc.querySelectorAll('item, report, entry');
         logDebug(`[${listId}] Parsed ${items.length} XML entries`, 'success');
 
@@ -601,7 +598,6 @@
         items.forEach(item => {
           const title = item.querySelector('title')?.textContent || '';
           
-          // Fallback extraction for links if standard <link> tag is missing or empty
           let link = item.querySelector('link')?.textContent || '';
           if (!link.trim()) {
             const guid = item.querySelector('guid')?.textContent;
@@ -615,7 +611,6 @@
           const pubDateStr = item.querySelector('pubDate, date, dc\\:date')?.textContent;
           const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
-          // Skip malformed entries missing titles or valid links
           if (!title.trim() || !link.trim() || link === '#') return;
 
           const description = item.querySelector('description, content')?.textContent || '';
@@ -687,14 +682,13 @@
       });
     }
 
-    // Set initial drawer state
     document.body.classList.add('drawer-open');
 
-    // Initialize feeds with resilient 24-hour error-safe caching & proxy fallback expansion
+    // Updated Previews feed with standard ANN News feed endpoint to correctly parse items/trailers
     loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     loadFeedWithCache('https://myanimelist.net/rss/news.xml', 'list-mal');
     loadFeedWithCache('https://nyaa.si/?page=rss', 'list-nyaa');
-    loadFeedWithCache('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
+    loadFeedWithCache('https://www.animenewsnetwork.com/newsfeed/rss.xml?tag=trailer', 'list-pv');
   </script>
 </body>
 </html>
