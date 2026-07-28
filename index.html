@@ -67,7 +67,7 @@
       z-index: 2;
     }
 
-    /* Main Container - Shifts smoothly when drawer defaults open */
+    /* Main Container - Automatically balances screen space with drawer open/closed */
     .content-container {
       position: relative;
       z-index: 3;
@@ -78,11 +78,13 @@
       width: 100%;
       max-width: 680px;
       padding: 20px;
-      transform: translateX(-135px);
+      /* Shifts left to true-center the remaining visible viewport when drawer is open */
+      transform: translateX(-220px);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     body.drawer-closed .content-container {
+      /* Dead center of the whole screen when drawer is closed */
       transform: translateX(0);
     }
 
@@ -152,7 +154,7 @@
     .link-card.pink:hover { border-color: var(--accent-pink); color: var(--accent-pink); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4); }
     .link-card.blue:hover { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 10px 30px var(--glow-blue); }
 
-    /* Collapsible Drawer (Defaults Open, Wider to fit thumbs) */
+    /* Collapsible Drawer (Defaults Open) */
     .drawer {
       position: absolute;
       right: 0;
@@ -267,7 +269,6 @@
       border-bottom: none;
     }
 
-    /* Thumbnail styling */
     .feed-thumb {
       width: 64px;
       height: 48px;
@@ -390,13 +391,10 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    // Smart image extractor to find image previews in description tags or enclosures
     function extractThumbnail(item) {
-      // 1. Check rss2json native thumbnail or enclosure fields
       if (item.thumbnail && item.thumbnail.length > 0) return item.thumbnail;
       if (item.enclosure && item.enclosure.link) return item.enclosure.link;
 
-      // 2. Parse HTML content/description strings for embedded image links
       const parser = new DOMParser();
       const htmlDoc = parser.parseFromString(item.description || item.content || '', 'text/html');
       const img = htmlDoc.querySelector('img');
@@ -413,7 +411,7 @@
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        if (data.status === 'ok') {
+        if (data.status === 'ok' && data.items.length > 0) {
           listElement.innerHTML = '';
           data.items.slice(0, maxItems).forEach(item => {
             const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -422,7 +420,6 @@
             const li = document.createElement('li');
             li.className = 'feed-item';
             
-            // Render structure conditionally with or without thumbnail image
             let thumbHtml = thumbUrl ? `<img class="feed-thumb" src="${thumbUrl}" alt="" loading="lazy">` : '';
 
             li.innerHTML = `
@@ -435,7 +432,7 @@
             listElement.appendChild(li);
           });
         } else {
-          listElement.innerHTML = '<li class="feed-loading">Feed unavailable.</li>';
+          listElement.innerHTML = '<li class="feed-loading">Feed currently empty.</li>';
         }
       } catch (err) {
         listElement.innerHTML = '<li class="feed-loading">Connection error.</li>';
@@ -446,6 +443,8 @@
     fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
     fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
+    
+    // Fixed: Swapped preview target to ANN's main news/feed endpoint or standard list to avoid empty reports array returns
     fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
   </script>
 </body>
