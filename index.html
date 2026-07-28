@@ -464,7 +464,7 @@
   <div class="drawer">
     <div class="drawer-toggle" onclick="toggleDrawer()">UPDATES</div>
     
-    <div class="tabs-header">g
+    <div class="tabs-header">
       <button class="tab-btn active" onclick="switchTab('ann')">ANN</button>
       <button class="tab-btn" onclick="switchTab('mal')">MAL</button>
       <button class="tab-btn" onclick="switchTab('nyaa')">NYAA</button>
@@ -490,6 +490,9 @@
   </div>
 
   <script>
+    // Increment this revision number every time you update the code on GitHub to verify browser cache updates instantly
+    const BUILD_REVISION = 'rev-4';
+
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
       if (!logsContainer) return;
@@ -586,7 +589,6 @@
         const parser = new DOMParser();
         let xmlDoc = parser.parseFromString(rawText, 'text/xml');
         
-        // Handle malformed/HTML-wrapped XML payloads gracefully instead of hard-failing
         if (xmlDoc.querySelector('parsererror')) {
           logDebug(`[${listId}] Strict XML parse error detected. Attempting sanitization...`, 'warn');
           const cleanedText = rawText.trim().replace(/^[^<]*/, '');
@@ -688,9 +690,13 @@
       });
     }
 
+    // Print active build/revision badge instantly on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      logDebug(`Startpage active layout loaded. Build Revision: [ ${BUILD_REVISION} ]`, 'success');
+    });
+
     document.body.classList.add('drawer-open');
 
-    // Using ANN's reliable main RSS feed filtered dynamically for trailer updates, with robust XML sanitization fallback
     loadFeedWithCache('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     loadFeedWithCache('https://myanimelist.net/rss/news.xml', 'list-mal');
     loadFeedWithCache('https://nyaa.si/?page=rss', 'list-nyaa');
