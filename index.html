@@ -81,7 +81,6 @@
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Shift content slightly left when sidebar is open */
     body.drawer-open .content-container {
       transform: translateX(-100px);
     }
@@ -117,6 +116,11 @@
       font-weight: 500;
     }
 
+    .search-box input::placeholder {
+      color: var(--text-sub);
+      opacity: 0.7;
+    }
+
     /* Links Grid */
     .links-grid {
       display: grid;
@@ -150,7 +154,7 @@
     /* Collapsible Drawer */
     .drawer {
       position: absolute;
-      right: -360px; /* Hidden by default */
+      right: -360px;
       top: 2%;
       height: 96%;
       width: 360px;
@@ -202,7 +206,7 @@
       background: rgba(15, 23, 42, 0.95);
     }
 
-    /* Drawer Interior - Tabs */
+    /* Tabs Header */
     .tabs-header {
       display: flex;
       border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -215,7 +219,7 @@
       border: none;
       color: var(--text-sub);
       padding: 10px 0;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       border-bottom: 2px solid transparent;
@@ -231,7 +235,7 @@
       color: var(--text-main);
     }
 
-    /* Drawer Interior - Content */
+    /* Tab Content Panels */
     .tab-content {
       flex: 1;
       padding: 20px;
@@ -276,9 +280,8 @@
     .feed-item a:hover {
       color: var(--accent-blue);
     }
-    
-    .tab-content#nyaa .feed-item a:hover { color: var(--accent-blue); }
-    .tab-content#yt .feed-item a:hover { color: var(--accent-pink); }
+
+    .tab-content#pv .feed-item a:hover { color: var(--accent-pink); }
     .tab-content#mal .feed-item a:hover { color: var(--accent-gold); }
 
     .feed-meta {
@@ -294,11 +297,9 @@
       margin-top: 20px;
     }
 
-    /* Custom Scrollbar for Drawer */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
@@ -333,7 +334,7 @@
       <button class="tab-btn active" onclick="switchTab('ann')">ANN</button>
       <button class="tab-btn" onclick="switchTab('mal')">MAL</button>
       <button class="tab-btn" onclick="switchTab('nyaa')">NYAA</button>
-      <button class="tab-btn" onclick="switchTab('yt')">YT</button>
+      <button class="tab-btn" onclick="switchTab('pv')">PVs</button>
     </div>
 
     <!-- ANN Content -->
@@ -342,25 +343,23 @@
     </div>
     <!-- MAL Content -->
     <div class="tab-content" id="mal">
-      <ul class="feed-list" id="list-mal"><li class="feed-loading">Fetching MAL News...</li></ul>
+      <ul class="feed-list" id="list-mal"><li class="feed-loading">Fetching MAL...</li></ul>
     </div>
     <!-- Nyaa Content -->
     <div class="tab-content" id="nyaa">
       <ul class="feed-list" id="list-nyaa"><li class="feed-loading">Fetching Nyaa...</li></ul>
     </div>
-    <!-- YouTube Content -->
-    <div class="tab-content" id="yt">
-      <ul class="feed-list" id="list-yt"><li class="feed-loading">Fetching YouTube...</li></ul>
+    <!-- Previews / Trailers Content -->
+    <div class="tab-content" id="pv">
+      <ul class="feed-list" id="list-pv"><li class="feed-loading">Fetching Previews...</li></ul>
     </div>
   </div>
 
   <script>
-    // Drawer Logic
     function toggleDrawer() {
       document.body.classList.toggle('drawer-open');
     }
 
-    // Tab Switching Logic
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -369,7 +368,6 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    // Universal RSS Fetcher via rss2json
     async function fetchRSS(rssUrl, listId, maxItems = 8) {
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
       const listElement = document.getElementById(listId);
@@ -381,9 +379,7 @@
         if (data.status === 'ok') {
           listElement.innerHTML = '';
           data.items.slice(0, maxItems).forEach(item => {
-            // Format date slightly
             const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            
             const li = document.createElement('li');
             li.className = 'feed-item';
             li.innerHTML = `
@@ -393,25 +389,20 @@
             listElement.appendChild(li);
           });
         } else {
-          listElement.innerHTML = '<li class="feed-loading">Failed to load feed.</li>';
+          listElement.innerHTML = '<li class="live-loading">Feed unavailable.</li>';
         }
       } catch (err) {
-        listElement.innerHTML = '<li class="feed-loading">Network error.</li>';
+        listElement.innerHTML = '<li class="live-loading">Connection error.</li>';
       }
     }
 
-    // Initialize feeds
-    // 1. ANN
+    // Load active working feeds
     fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
-    
-    // 2. MAL News
     fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
-    
-    // 3. Nyaa (Global Feed)
     fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
     
-    // 4. YouTube (Crunchyroll Anime feed as a default placeholder)
-    fetchRSS('https://www.youtube.com/feeds/videos.xml?channel_id=UCpBNCtjP12Fk1F3F3U4jBkA', 'list-yt');
+        // Using an anime promotion / trailers news vector instead of a fragile direct yt channel ID link
+    fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155&n=50', 'list-pv');
   </script>
 </body>
 </html>
