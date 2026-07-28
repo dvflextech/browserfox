@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <title>Celestial Fox Startpage</title>
   <style>
-    /* Celestial Blue & Gold Palette */
+    /* Celestial Blue & Gold Palette with Extra Pop */
     :root {
-      --bg-dark: #050811;
-      --card-bg: rgba(10, 16, 32, 0.65);
-      --card-border: rgba(234, 179, 8, 0.25); /* Subtle gold rim */
+      --bg-dark: #03050c;
+      --card-bg: rgba(8, 14, 30, 0.7);
+      --card-border: rgba(56, 189, 248, 0.2); 
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
-      --accent-gold: #f59e0b;
+      --accent-gold: #fbbf24;
       --accent-blue: #38bdf8;
-      --glow-gold: rgba(245, 158, 11, 0.35);
-      --glow-blue: rgba(56, 189, 248, 0.4);
+      --accent-pink: #f472b6;
+      --glow-blue: rgba(56, 189, 248, 0.45);
+      --glow-gold: rgba(251, 191, 36, 0.4);
     }
 
     * {
@@ -53,55 +54,60 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: brightness(0.82) contrast(1.05);
+      filter: brightness(0.85) contrast(1.08);
       pointer-events: none;
+      animation: ambientPulse 8s ease-in-out infinite alternate;
     }
 
-    /* Vignette overlay to smooth out edge contrast */
+    @keyframes ambientPulse {
+      0% { transform: scale(1); filter: brightness(0.85) contrast(1.08); }
+      100% { transform: scale(1.03); filter: brightness(0.92) contrast(1.12); }
+    }
+
+    /* Deep Vignette Overlay */
     .bg-overlay {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(5, 8, 17, 0.1) 0%, rgba(5, 8, 17, 0.75) 100%);
+      background: radial-gradient(circle at center, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 12, 0.8) 100%);
       z-index: 2;
       pointer-events: none;
     }
 
-    /* Main Content Container */
+    /* Main Container */
     .content-container {
       position: relative;
       z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
       width: 100%;
-      max-width: 620px;
+      max-width: 720px;
       padding: 20px;
-      margin-top: 60px; /* Offset slightly to frame artwork nicely */
     }
 
-    /* Sleek Centered Search Bar */
+    /* Dynamic Search Bar */
     .search-form {
       width: 100%;
     }
 
     .search-box {
       width: 100%;
-      background: rgba(8, 13, 26, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
+      background: rgba(6, 11, 24, 0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
       border-radius: 50px;
-      padding: 16px 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--glow-blue);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 16px 32px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 25px var(--glow-blue);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .search-box:focus-within {
-      transform: translateY(-2px) scale(1.01);
+      transform: translateY(-3px) scale(1.015);
       border-color: var(--accent-gold);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--glow-gold);
-      background: rgba(5, 8, 17, 0.9);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 35px var(--glow-gold);
+      background: rgba(3, 5, 12, 0.92);
     }
 
     .search-box input {
@@ -112,20 +118,20 @@
       font-size: 1.15rem;
       color: var(--text-main);
       text-align: center;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.5px;
     }
 
     .search-box input::placeholder {
       color: var(--text-sub);
-      opacity: 0.75;
+      opacity: 0.7;
     }
 
-    /* Quick Links Grid */
+    /* Expanded Links Grid (Two Rows) */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
+      gap: 12px;
       width: 100%;
     }
 
@@ -134,23 +140,39 @@
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
-      padding: 12px 18px;
-      border-radius: 18px;
+      padding: 12px 14px;
+      border-radius: 16px;
       text-decoration: none;
       color: var(--text-main);
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-align: center;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     .link-card:hover {
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.9);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px var(--glow-gold);
+    }
+
+    .link-card.pink:hover {
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+      box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4);
+    }
+
+    .link-card.blue:hover {
       border-color: var(--accent-blue);
       color: var(--accent-blue);
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px var(--glow-blue);
+      box-shadow: 0 10px 30px var(--glow-blue);
     }
 
     /* ANN Live Feed Glass Widget */
@@ -183,11 +205,11 @@
 
     .feed-title .badge {
       font-size: 0.65rem;
-      background: rgba(245, 158, 11, 0.15);
+      background: rgba(251, 191, 36, 0.15);
       color: var(--accent-gold);
       padding: 2px 8px;
       border-radius: 10px;
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      border: 1px solid rgba(251, 191, 36, 0.3);
     }
 
     .feed-list {
@@ -229,19 +251,23 @@
   </div>
   <div class="bg-overlay"></div>
 
-  <!-- Central Search & Links Layer -->
+  <!-- Central Search & Expanded Links Layer -->
   <div class="content-container">
     <form class="search-form" action="https://duckduckgo.com/" method="get">
       <div class="search-box">
-        <input type="text" name="q" placeholder="Search..." autofocus autocomplete="off">
+        <input type="text" name="q" placeholder="Search" autofocus autocomplete="off">
       </div>
     </form>
 
     <div class="links-grid">
-      <a href="https://nyaa.si" class="link-card">Nyaa</a>
-      <a href="https://reddit.com" class="link-card">Reddit</a>
-      <a href="https://anilist.co" class="link-card">AniList</a>
-      <a href="https://imdb.com" class="link-card">IMDb</a>
+      <a href="https://nyaa.si" class="link-card blue">Nyaa</a>
+      <a href="https://anilist.co" class="link-card gold">AniList</a>
+      <a href="https://myanimelist.net" class="link-card blue">MAL</a>
+      <a href="https://www.youtube.com" class="link-card pink">YouTube</a>
+      <a href="https://www.twitch.tv" class="link-card pink">Twitch</a>
+      <a href="https://reddit.com" class="link-card blue">Reddit</a>
+      <a href="https://sukebei.nyaa.si" class="link-card pink">Sukebei</a>
+      <a href="https://imdb.com" class="link-card gold">IMDb</a>
     </div>
   </div>
 
