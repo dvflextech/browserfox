@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Celestial Fox Startpage</title>
   <style>
-    /* Celestial Blue & Gold Palette with Live Widgets */
+    /* Celestial Palette */
     :root {
       --bg-dark: #03050c;
       --card-bg: rgba(8, 14, 30, 0.7);
@@ -37,13 +37,10 @@
       position: relative;
     }
 
-    /* Background Artwork Layer */
+    /* Background Artwork */
     .bg-wrapper {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
       z-index: 1;
       display: flex;
       align-items: center;
@@ -55,7 +52,6 @@
       height: 100%;
       object-fit: cover;
       filter: brightness(0.85) contrast(1.08);
-      pointer-events: none;
       animation: ambientPulse 8s ease-in-out infinite alternate;
     }
 
@@ -64,64 +60,11 @@
       100% { transform: scale(1.03); filter: brightness(0.92) contrast(1.12); }
     }
 
-    /* Deep Vignette Overlay */
     .bg-overlay {
       position: absolute;
       inset: 0;
       background: radial-gradient(circle at center, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 12, 0.8) 100%);
       z-index: 2;
-      pointer-events: none;
-    }
-
-    /* Top-Right Widget Hub (Clock & Weather) */
-    .top-right-hub {
-      position: absolute;
-      top: 25px;
-      right: 25px;
-      z-index: 3;
-      display: flex;
-      gap: 12px;
-    }
-
-    .hub-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      padding: 10px 16px;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-    }
-
-    .hub-time {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-main);
-      letter-spacing: 0.5px;
-    }
-
-    .hub-date {
-      font-size: 0.75rem;
-      color: var(--accent-blue);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .hub-weather {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--accent-gold);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hub-weather-sub {
-      font-size: 0.7rem;
-      color: var(--text-sub);
     }
 
     /* Main Container */
@@ -135,18 +78,21 @@
       width: 100%;
       max-width: 720px;
       padding: 20px;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Shift content slightly left when sidebar is open */
+    body.drawer-open .content-container {
+      transform: translateX(-100px);
     }
 
     /* Dynamic Search Bar */
-    .search-form {
-      width: 100%;
-    }
+    .search-form { width: 100%; }
 
     .search-box {
       width: 100%;
       background: rgba(6, 11, 24, 0.8);
       backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
       border: 1px solid rgba(56, 189, 248, 0.3);
       border-radius: 50px;
       padding: 16px 32px;
@@ -158,7 +104,6 @@
       transform: translateY(-3px) scale(1.015);
       border-color: var(--accent-gold);
       box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 35px var(--glow-gold);
-      background: rgba(3, 5, 12, 0.92);
     }
 
     .search-box input {
@@ -170,15 +115,9 @@
       color: var(--text-main);
       text-align: center;
       font-weight: 500;
-      letter-spacing: 0.5px;
     }
 
-    .search-box input::placeholder {
-      color: var(--text-sub);
-      opacity: 0.7;
-    }
-
-    /* Links Grid (Two Rows) */
+    /* Links Grid */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -189,7 +128,6 @@
     .link-card {
       background: var(--card-bg);
       backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
       padding: 12px 14px;
       border-radius: 16px;
@@ -199,129 +137,182 @@
       font-size: 0.9rem;
       text-align: center;
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
     }
 
     .link-card:hover {
       background: rgba(15, 23, 42, 0.9);
-      border-color: var(--accent-gold);
-      color: var(--accent-gold);
       transform: translateY(-4px);
-      box-shadow: 0 10px 30px var(--glow-gold);
     }
+    .link-card.gold:hover { border-color: var(--accent-gold); color: var(--accent-gold); box-shadow: 0 10px 30px var(--glow-gold); }
+    .link-card.pink:hover { border-color: var(--accent-pink); color: var(--accent-pink); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4); }
+    .link-card.blue:hover { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 10px 30px var(--glow-blue); }
 
-    .link-card.pink:hover {
-      border-color: var(--accent-pink);
-      color: var(--accent-pink);
-      box-shadow: 0 10px 30px rgba(244, 114, 182, 0.4);
-    }
-
-    .link-card.blue:hover {
-      border-color: var(--accent-blue);
-      color: var(--accent-blue);
-      box-shadow: 0 10px 30px var(--glow-blue);
-    }
-
-    /* ANN Live Feed Glass Widget */
-    .feed-widget {
+    /* Collapsible Drawer */
+    .drawer {
       position: absolute;
-      bottom: 25px;
-      right: 25px;
-      z-index: 3;
-      width: 320px;
-      background: var(--card-bg);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      right: -360px; /* Hidden by default */
+      top: 2%;
+      height: 96%;
+      width: 360px;
+      background: rgba(8, 14, 30, 0.85);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-left: 1px solid var(--card-border);
+      border-radius: 24px 0 0 24px;
+      z-index: 10;
+      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
     }
 
-    .feed-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--accent-gold);
-      margin-bottom: 12px;
+    body.drawer-open .drawer {
+      right: 0;
+    }
+
+    /* Drawer Toggle Button */
+    .drawer-toggle {
+      position: absolute;
+      left: -44px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 100px;
+      background: rgba(8, 14, 30, 0.85);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--card-border);
+      border-right: none;
+      border-radius: 16px 0 0 16px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      color: var(--accent-blue);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.3);
     }
 
-    .feed-title .badge {
-      font-size: 0.65rem;
-      background: rgba(251, 191, 36, 0.15);
+    .drawer-toggle:hover {
       color: var(--accent-gold);
-      padding: 2px 8px;
-      border-radius: 10px;
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    /* Drawer Interior - Tabs */
+    .tabs-header {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 20px 20px 0 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      padding: 10px 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-gold);
+      border-bottom: 2px solid var(--accent-gold);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text-main);
+    }
+
+    /* Drawer Interior - Content */
+    .tab-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
     }
 
     .feed-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
+    }
+
+    .feed-item {
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .feed-item:last-child {
+      border-bottom: none;
     }
 
     .feed-item a {
       text-decoration: none;
-      color: var(--text-sub);
-      font-size: 0.85rem;
-      line-height: 1.35;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      font-weight: 500;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       transition: color 0.2s ease;
+      margin-bottom: 4px;
     }
 
     .feed-item a:hover {
       color: var(--accent-blue);
     }
+    
+    .tab-content#nyaa .feed-item a:hover { color: var(--accent-blue); }
+    .tab-content#yt .feed-item a:hover { color: var(--accent-pink); }
+    .tab-content#mal .feed-item a:hover { color: var(--accent-gold); }
+
+    .feed-meta {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
 
     .feed-loading {
-      font-size: 0.85rem;
+      text-align: center;
       color: var(--text-sub);
       font-style: italic;
-      text-align: center;
+      font-size: 0.9rem;
+      margin-top: 20px;
     }
+
+    /* Custom Scrollbar for Drawer */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
 
-  <!-- Background Layer -->
-  <div class="bg-wrapper">
-    <img src="bg.jpg" alt="Celestial Fox">
-  </div>
+  <div class="bg-wrapper"><img src="bg.jpg" alt="Celestial Fox"></div>
   <div class="bg-overlay"></div>
 
-  <!-- Top-Right Widget Hub (Clock & Live Weather) -->
-  <div class="top-right-hub">
-    <div class="hub-card">
-      <div class="hub-time" id="clock-time">--:--</div>
-      <div class="hub-date" id="clock-date">Loading...</div>
-    </div>
-    <div class="hub-card" id="weather-card">
-      <div class="hub-weather" id="weather-temp">--°C</div>
-      <div class="hub-weather-sub" id="weather-condition">Checking weather...</div>
-    </div>
-  </div>
-
-  <!-- Central Search & Expanded Links Layer -->
+  <!-- Central Search & Links -->
   <div class="content-container">
     <form class="search-form" action="https://duckduckgo.com/" method="get">
       <div class="search-box">
         <input type="text" name="q" placeholder="Search" autofocus autocomplete="off">
       </div>
     </form>
-
     <div class="links-grid">
       <a href="https://nyaa.si" class="link-card blue">Nyaa</a>
       <a href="https://anilist.co" class="link-card gold">AniList</a>
@@ -334,77 +325,54 @@
     </div>
   </div>
 
-  <!-- ANN Live Feed Widget -->
-  <div class="feed-widget">
-    <div class="feed-title">
-      <span>Anime News</span>
-      <span class="badge">ANN</span>
+  <!-- Collapsible Updates Drawer -->
+  <div class="drawer">
+    <div class="drawer-toggle" onclick="toggleDrawer()">UPDATES</div>
+    
+    <div class="tabs-header">
+      <button class="tab-btn active" onclick="switchTab('ann')">ANN</button>
+      <button class="tab-btn" onclick="switchTab('mal')">MAL</button>
+      <button class="tab-btn" onclick="switchTab('nyaa')">NYAA</button>
+      <button class="tab-btn" onclick="switchTab('yt')">YT</button>
     </div>
-    <ul class="feed-list" id="ann-feed">
-      <li class="feed-loading">Loading news...</li>
-    </ul>
+
+    <!-- ANN Content -->
+    <div class="tab-content active" id="ann">
+      <ul class="feed-list" id="list-ann"><li class="feed-loading">Fetching ANN...</li></ul>
+    </div>
+    <!-- MAL Content -->
+    <div class="tab-content" id="mal">
+      <ul class="feed-list" id="list-mal"><li class="feed-loading">Fetching MAL News...</li></ul>
+    </div>
+    <!-- Nyaa Content -->
+    <div class="tab-content" id="nyaa">
+      <ul class="feed-list" id="list-nyaa"><li class="feed-loading">Fetching Nyaa...</li></ul>
+    </div>
+    <!-- YouTube Content -->
+    <div class="tab-content" id="yt">
+      <ul class="feed-list" id="list-yt"><li class="feed-loading">Fetching YouTube...</li></ul>
+    </div>
   </div>
 
   <script>
-    // Live Clock Script
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      
-      document.getElementById('clock-time').textContent = `${hours}:${minutes} ${ampm}`;
-      
-      const options = { weekday: 'short', month: 'short', day: 'numeric' };
-      document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', options);
+    // Drawer Logic
+    function toggleDrawer() {
+      document.body.classList.toggle('drawer-open');
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
-    // Geolocation & Live Weather Script (Open-Meteo API - Free, No Key Required)
-    async function fetchWeather() {
-      if (!navigator.geolocation) {
-        document.getElementById('weather-condition').textContent = 'Location unavailable';
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`;
-
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          const tempC = Math.round(data.current.temperature_2m);
-          const tempF = Math.round((tempC * 9/5) + 32);
-          const code = data.current.weather_code;
-
-          // Simple weather code mapping
-          let condition = 'Clear';
-          if (code >= 1 && code <= 3) condition = 'Partly Cloudy';
-          else if (code >= 45 && code <= 48) condition = 'Foggy';
-          else if (code >= 51 && code <= 67) condition = 'Rainy';
-          else if (code >= 71 && code <= 77) condition = 'Snowy';
-          else if (code >= 95) condition = 'Stormy';
-
-          document.getElementById('weather-temp').textContent = `${tempC}°C / ${tempF}°F`;
-          document.getElementById('weather-condition').textContent = condition;
-        } catch (e) {
-          document.getElementById('weather-condition').textContent = 'Weather error';
-        }
-      }, () => {
-        document.getElementById('weather-condition').textContent = 'Location denied';
-      });
+    // Tab Switching Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
     }
-    fetchWeather();
 
-    // Live ANN RSS Feed Script
-    async function fetchANNFeed() {
-      const feedUrl = encodeURIComponent('https://www.animenewsnetwork.com/all/rss.xml');
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
-      const listElement = document.getElementById('ann-feed');
+    // Universal RSS Fetcher via rss2json
+    async function fetchRSS(rssUrl, listId, maxItems = 8) {
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+      const listElement = document.getElementById(listId);
 
       try {
         const response = await fetch(apiUrl);
@@ -412,21 +380,38 @@
 
         if (data.status === 'ok') {
           listElement.innerHTML = '';
-          data.items.slice(0, 3).forEach(item => {
+          data.items.slice(0, maxItems).forEach(item => {
+            // Format date slightly
+            const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
             const li = document.createElement('li');
             li.className = 'feed-item';
-            li.innerHTML = `<a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>`;
+            li.innerHTML = `
+              <a href="${item.link}" target="_blank" title="${item.title}">${item.title}</a>
+              <div class="feed-meta">${date}</div>
+            `;
             listElement.appendChild(li);
           });
         } else {
-          listElement.innerHTML = '<li class="feed-loading">Feed unavailable</li>';
+          listElement.innerHTML = '<li class="feed-loading">Failed to load feed.</li>';
         }
       } catch (err) {
-        listElement.innerHTML = '<li class="feed-loading">Error loading feed</li>';
+        listElement.innerHTML = '<li class="feed-loading">Network error.</li>';
       }
     }
 
-    fetchANNFeed();
+    // Initialize feeds
+    // 1. ANN
+    fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
+    
+    // 2. MAL News
+    fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
+    
+    // 3. Nyaa (Global Feed)
+    fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
+    
+    // 4. YouTube (Crunchyroll Anime feed as a default placeholder)
+    fetchRSS('https://www.youtube.com/feeds/videos.xml?channel_id=UCpBNCtjP12Fk1F3F3U4jBkA', 'list-yt');
   </script>
 </body>
 </html>
