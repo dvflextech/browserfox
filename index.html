@@ -491,7 +491,7 @@
 
   <script>
     // Increment this revision number every time you update the code on GitHub to verify browser cache updates instantly
-    const BUILD_REVISION = 'rev-4';
+    const BUILD_REVISION = 'rev-5-video-feed-fixed';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -620,6 +620,15 @@
           const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
           if (!title.trim() || !link.trim() || link === '#') return;
+
+          // If this is the Previews tab, filter for titles containing trailer/pv keywords to show actual video/promotional content
+          if (listId === 'list-pv') {
+            const lowerTitle = title.toLowerCase();
+            const lowerDesc = (item.querySelector('description, content')?.textContent || '').toLowerCase();
+            const hasVideoKeyword = lowerTitle.includes('trailer') || lowerTitle.includes('pv') || lowerTitle.includes('promo') || lowerTitle.includes('teaser') || lowerTitle.includes('video') ||
+                                    lowerDesc.includes('trailer') || lowerDesc.includes('pv') || lowerDesc.includes('promo') || lowerDesc.includes('teaser');
+            if (!hasVideoKeyword) return;
+          }
 
           const description = item.querySelector('description, content')?.textContent || '';
           const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
