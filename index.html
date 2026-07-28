@@ -491,7 +491,7 @@
 
   <script>
     // Increment this revision number every time you update the code on GitHub to verify browser cache updates instantly
-    const BUILD_REVISION = 'rev-6-proxy-rotation';
+    const BUILD_REVISION = 'rev-7-xml-robust-parsing';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -592,15 +592,27 @@
         
         if (xmlDoc.querySelector('parsererror')) {
           logDebug(`[${listId}] Strict XML parse error detected. Attempting sanitization...`, 'warn');
-          const cleanedText = rawText.trim().replace(/^[^<]*/, '');
+          
+          // Fallback sanitization: Strip out potential HTML comments or malformed processing instructions before the root
+          let cleanedText = rawText.trim();
+          const firstTag = cleanedText.indexOf('<rss') !== -1 ? cleanedText.indexOf('<rss') : cleanedText.indexOf('<feed') !== -1 ? cleanedText.indexOf('<feed') : cleanedText.indexOf('<rdf');
+          if (firstTag !== -1) {
+            cleanedText = cleanedText.substring(firstTag);
+          } else {
+            cleanedText = cleanedText.replace(/^[^<]*/, '');
+          }
+
           xmlDoc = parser.parseFromString(cleanedText, 'text/xml');
+          
           if (xmlDoc.querySelector('parsererror')) {
-            throw new Error('Invalid XML structure received from source');
+            logDebug(`[${listId}] XML strict parser failed. Falling back to HTML tolerance mode...`, 'warn');
+            // Final fallback: Parse using text/html to safely handle unescaped entities & broken rss syntax
+            xmlDoc = parser.parseFromString(rawText, 'text/html');
           }
         }
 
         const items = xmlDoc.querySelectorAll('item, report, entry');
-        logDebug(`[${listId}] Parsed ${items.length} XML entries`, 'success');
+        logDebug(`[${listId}] Parsed ${items.length} entries`, 'success');
 
         const parsedItems = [];
 
@@ -608,6 +620,10 @@
           const title = item.querySelector('title')?.textContent || '';
           
           let link = item.querySelector('link')?.textContent || '';
+          if (!link.trim()) {
+            const linkTag = item.querySelector('link');
+            if (linkTag && linkTag.getAttribute('href')) link = linkTag.getAttribute('href');
+          }
           if (!link.trim()) {
             const guid = item.querySelector('guid')?.textContent;
             if (guid && guid.startsWith('http')) link = guid;
@@ -617,7 +633,7 @@
             if (comments && comments.startsWith('http')) link = comments;
           }
 
-          const pubDateStr = item.querySelector('pubDate, date, dc\\:date')?.textContent;
+          const pubDateStr = item.querySelector('pubDate, date, published, updated, dc\\:date')?.textContent;
           const date = pubDateStr ? new Date(pubDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
           if (!title.trim() || !link.trim() || link === '#') return;
@@ -625,18 +641,16 @@
           // If this is the Previews tab, filter for titles containing trailer/pv keywords to show actual video/promotional content
           if (listId === 'list-pv') {
             const lowerTitle = title.toLowerCase();
-            const lowerDesc = (item.querySelector('description, content')?.textContent || '').toLowerCase();
+            const lowerDesc = (item.querySelector('description, content, summary')?.textContent || '').toLowerCase();
             const hasVideoKeyword = lowerTitle.includes('trailer') || lowerTitle.includes('pv') || lowerTitle.includes('promo') || lowerTitle.includes('teaser') || lowerTitle.includes('video') ||
                                     lowerDesc.includes('trailer') || lowerDesc.includes('pv') || lowerDesc.includes('promo') || lowerDesc.includes('teaser');
             if (!hasVideoKeyword) return;
           }
 
-          const description = item.querySelector('description, content')?.textContent || '';
-          const contentEncoded = item.getElementsByTagNameNS('*', 'encoded')[0]?.textContent || '';
-          const combinedHtml = description + ' ' + contentEncoded;
-
+          const description = item.querySelector('description, content, summary')?.textContent || '';
           let thumbUrl = null;
-          const mediaContent = item.getElementsByTagNameNS('*', 'content')[0];
+          
+          const mediaContent = item.getElementsByTagNameNS('*', 'content')[0] || item.querySelector('media\\:content, content');
           if (mediaContent && mediaContent.getAttribute('url')) {
             thumbUrl = mediaContent.getAttribute('url');
           } else {
@@ -646,8 +660,8 @@
             }
           }
 
-          if (!thumbUrl && combinedHtml) {
-            const doc = parser.parseFromString(combinedHtml, 'text/html');
+          if (!thumbUrl && description) {
+            const doc = parser.parseFromString(description, 'text/html');
             const img = doc.querySelector('img');
             if (img && img.src) { thumbUrl = img.src; }
           }
