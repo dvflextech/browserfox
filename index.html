@@ -158,7 +158,7 @@
       right: 0;
       top: 2%;
       height: 96%;
-      width: 400px; /* Wider for easier reading */
+      width: 400px;
       background: rgba(6, 10, 22, 0.88);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
@@ -267,7 +267,7 @@
     .feed-item a {
       text-decoration: none;
       color: var(--text-main);
-      font-size: 0.95rem; /* Larger for readability */
+      font-size: 0.95rem;
       line-height: 1.45;
       font-weight: 500;
       display: -webkit-box;
@@ -337,7 +337,7 @@
       <button class="tab-btn active" onclick="switchTab('ann')">ANN</button>
       <button class="tab-btn" onclick="switchTab('mal')">MAL</button>
       <button class="tab-btn" onclick="switchTab('nyaa')">NYAA</button>
-      <button class="tab-btn" onclick="switchTab('pv')">PVs</button>
+      <button class="tab-btn" onclick="switchTab('pv')">Previews</button>
     </div>
 
     <!-- ANN Content -->
@@ -359,7 +359,6 @@
   </div>
 
   <script>
-    // Note: No class on body means drawer starts open by default. Clicking toggle adds 'drawer-closed'.
     function toggleDrawer() {
       document.body.classList.toggle('drawer-closed');
     }
@@ -400,11 +399,13 @@
       }
     }
 
-    // Initialize feeds
+    // Initialize feeds with valid RSS endpoints
     fetchRSS('https://www.animenewsnetwork.com/all/rss.xml', 'list-ann');
     fetchRSS('https://myanimelist.net/rss/news.xml', 'list-mal');
     fetchRSS('https://nyaa.si/?page=rss', 'list-nyaa');
-    fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155&n=50', 'list-pv');
+    
+    // Fixed working Preview Guide RSS feed
+    fetchRSS('https://www.animenewsnetwork.com/encyclopedia/reports.xml?id=155', 'list-pv');
   </script>
 </body>
 </html>
