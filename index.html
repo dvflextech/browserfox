@@ -63,7 +63,7 @@
       pointer-events: none;
     }
 
-    /* Main Container - Centered stably without shifting (~10% increased width and padding) */
+    /* Main Container - Centered stably without shifting */
     .content-container {
       position: relative;
       z-index: 3;
@@ -112,7 +112,7 @@
       opacity: 0.7;
     }
 
-    /* Links Grid - Configured for compact Favicons (~10% scaled up sizing) */
+    /* Links Grid - Scaled up icons an additional 25% (24px * 1.25 = 30px) and adjusted card padding */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -124,7 +124,7 @@
       background: var(--card-bg);
       backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
-      padding: 15px 0;
+      padding: 19px 0;
       border-radius: 18px;
       text-decoration: none;
       display: flex;
@@ -134,8 +134,8 @@
     }
 
     .link-card img.site-icon {
-      width: 24px;
-      height: 24px;
+      width: 30px;
+      height: 30px;
       object-fit: contain;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
       transition: transform 0.25s ease;
@@ -153,7 +153,7 @@
     .link-card.pink:hover { border-color: var(--accent-pink); box-shadow: 0 11px 33px rgba(244, 114, 182, 0.4); }
     .link-card.blue:hover { border-color: var(--accent-blue); box-shadow: 0 11px 33px var(--glow-blue); }
 
-    /* Left Debug Console Drawer (~10% wider at 418px) */
+    /* Left Debug Console Drawer */
     .debug-drawer {
       position: absolute;
       left: -418px;
@@ -254,7 +254,7 @@
     .log-entry.error { border-left-color: #ef4444; color: #fca5a5; }
     .log-entry.warn { border-left-color: var(--accent-gold); color: #fde047; }
 
-    /* Right Updates Drawer (~10% wider at 484px) */
+    /* Right Updates Drawer */
     .drawer {
       position: absolute;
       right: 0;
@@ -504,7 +504,7 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-13-scaled-up';
+    const BUILD_REVISION = 'rev-14-icons-scaled-25';
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
