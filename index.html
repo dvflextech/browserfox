@@ -42,7 +42,6 @@
       position: absolute;
       inset: 0;
       z-index: 1;
-      background-image: url('bg.jpg');
       background-size: cover;
       background-position: center 30%;
       background-repeat: no-repeat;
@@ -76,8 +75,11 @@
       padding: 22px;
     }
 
-    /* Dynamic Search Bar */
-    .search-form { width: 100%; }
+    /* Dynamic Search Bar & Dropdown Wrapper */
+    .search-form { 
+      width: 100%; 
+      position: relative;
+    }
 
     .search-box {
       width: 100%;
@@ -94,6 +96,8 @@
       transform: translateY(-3px) scale(1.015);
       border-color: var(--accent-gold);
       box-shadow: 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 38px var(--glow-gold);
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
     }
 
     .search-box input {
@@ -110,6 +114,64 @@
     .search-box input::placeholder {
       color: var(--text-sub);
       opacity: 0.7;
+    }
+
+    /* Search Suggestions / History Dropdown Panel */
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: rgba(4, 7, 18, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+      z-index: 100;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+
+    .search-dropdown.visible {
+      display: flex;
+    }
+
+    .dropdown-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-gold);
+      padding: 10px 18px 4px 18px;
+      font-weight: 700;
+      opacity: 0.8;
+    }
+
+    .dropdown-item {
+      padding: 11px 18px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s ease, color 0.15s ease;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover, .dropdown-item.selected {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-blue);
+    }
+
+    .dropdown-item .item-type {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      opacity: 0.6;
     }
 
     /* Links Grid - Scaled up icons an additional 25% (24px * 1.25 = 30px) and adjusted card padding */
@@ -440,7 +502,7 @@
 </head>
 <body class="debug-closed">
 
-  <div class="bg-wrapper"></div>
+  <div class="bg-wrapper" id="bg-wrapper"></div>
   <div class="bg-overlay"></div>
 
   <!-- Left Debug Console Drawer -->
@@ -457,9 +519,12 @@
 
   <!-- Central Search & Links -->
   <div class="content-container">
-    <form class="search-form" action="https://duckduckgo.com/" method="get">
+    <form class="search-form" id="search-form" action="https://duckduckgo.com/" method="get">
       <div class="search-box">
-        <input type="text" name="q" placeholder="Search" autofocus autocomplete="off">
+        <input type="text" id="search-input" name="q" placeholder="Search" autofocus autocomplete="off">
+      </div>
+      <div class="search-dropdown" id="search-dropdown">
+        <!-- Dynamically populated search history & live suggestions -->
       </div>
     </form>
     <div class="links-grid">
@@ -504,7 +569,26 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-14-icons-scaled-25';
+    const BUILD_REVISION = 'rev-16-random-bgart';
+
+    // List of background image filenames available in the bgart/ directory
+    const bgArtFiles = [
+      'bg1.jpg',
+      'bg2.jpg',
+      'bg3.jpg',
+      'bg4.jpg',
+      'bg5.jpg'
+      // You can easily append more filenames here as your collection grows
+    ];
+
+    function initRandomBackground() {
+      const bgWrapper = document.getElementById('bg-wrapper');
+      if (!bgWrapper || bgArtFiles.length === 0) return;
+      const randomIndex = Math.floor(Math.random() * bgArtFiles.length);
+      const chosenBg = `bgart/${bgArtFiles[randomIndex]}`;
+      bgWrapper.style.backgroundImage = `url('${chosenBg}')`;
+      logDebug(`Loaded random background: ${chosenBg}`, 'success');
+    }
 
     function logDebug(message, type = 'info') {
       const logsContainer = document.getElementById('debug-logs');
@@ -544,6 +628,180 @@
       logDebug('Local storage feed cache cleared. Reloading page recommended.', 'success');
       alert('Feed cache cleared! Refresh the page to fetch fresh feeds.');
     }
+
+    /* Enhanced Search & History Integration */
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    const searchDropdown = document.getElementById('search-dropdown');
+    const HISTORY_KEY = 'celestial_search_history';
+    let selectedIndex = -1;
+    let currentSuggestions = [];
+
+    function getSearchHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveSearchQuery(query) {
+      if (!query || !query.trim()) return;
+      let history = getSearchHistory();
+      query = query.trim();
+      history = history.filter(item => item.toLowerCase() !== query.toLowerCase());
+      history.unshift(query);
+      if (history.length > 10) history = history.slice(0, 10);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    async function fetchDuckDuckGoSuggestions(query) {
+      if (!query || query.trim().length === 0) return [];
+      try {
+        const url = `https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=list`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const parsed = JSON.parse(data.contents);
+        if (parsed && Array.isArray(parsed[1])) {
+          return parsed[1].slice(0, 5);
+        }
+      } catch (e) {
+        logDebug(`Suggestion fetch warning: ${e.message}`, 'warn');
+      }
+      return [];
+    }
+
+    function renderDropdown(historyItems, suggestions) {
+      searchDropdown.innerHTML = '';
+      currentSuggestions = [];
+
+      let hasContent = false;
+
+      if (historyItems.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'dropdown-section-title';
+        title.textContent = 'Recent Searches';
+        searchDropdown.appendChild(title);
+
+        historyItems.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'dropdown-item';
+          div.innerHTML = `<span>${item}</span><span class="item-type">history</span>`;
+          div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            searchInput.value = item;
+            submitSearch(item);
+          });
+          searchDropdown.appendChild(div);
+          currentSuggestions.push(item);
+          hasContent = true;
+        });
+      }
+
+      if (suggestions.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'dropdown-section-title';
+        title.textContent = 'Suggestions';
+        searchDropdown.appendChild(title);
+
+        suggestions.forEach(item => {
+          if (historyItems.includes(item)) return;
+          const div = document.createElement('div');
+          div.className = 'dropdown-item';
+          div.innerHTML = `<span>${item}</span><span class="item-type">suggestion</span>`;
+          div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            searchInput.value = item;
+            submitSearch(item);
+          });
+          searchDropdown.appendChild(div);
+          currentSuggestions.push(item);
+          hasContent = true;
+        });
+      }
+
+      if (hasContent) {
+        searchDropdown.classList.add('visible');
+      } else {
+        searchDropdown.classList.remove('visible');
+      }
+    }
+
+    function submitSearch(query) {
+      saveSearchQuery(query);
+      searchInput.value = query;
+      searchForm.submit();
+    }
+
+    let debounceTimer = null;
+    searchInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      selectedIndex = -1;
+      clearTimeout(debounceTimer);
+
+      const history = getSearchHistory();
+      const filteredHistory = val.trim() 
+        ? history.filter(h => h.toLowerCase().includes(val.toLowerCase())).slice(0, 4)
+        : history.slice(0, 5);
+
+      if (!val.trim()) {
+        renderDropdown(filteredHistory, []);
+        return;
+      }
+
+      debounceTimer = setTimeout(async () => {
+        const suggestions = await fetchDuckDuckGoSuggestions(val);
+        renderDropdown(filteredHistory, suggestions);
+      }, 200);
+    });
+
+    searchInput.addEventListener('focus', () => {
+      const history = getSearchHistory().slice(0, 5);
+      if (history.length > 0 || searchInput.value.trim()) {
+        renderDropdown(history, []);
+      }
+    });
+
+    searchInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        searchDropdown.classList.remove('visible');
+      }, 200);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      const items = searchDropdown.querySelectorAll('.dropdown-item');
+      if (!searchDropdown.classList.contains('visible') || items.length === 0) {
+        if (e.key === 'Enter') {
+          saveSearchQuery(searchInput.value);
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % items.length;
+        items.forEach((it, idx) => it.classList.toggle('selected', idx === selectedIndex));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+        items.forEach((it, idx) => it.classList.toggle('selected', idx === selectedIndex));
+      } else if (e.key === 'Enter') {
+        if (selectedIndex >= 0 && selectedIndex < currentSuggestions.length) {
+          e.preventDefault();
+          const selectedVal = currentSuggestions[selectedIndex];
+          searchInput.value = selectedVal;
+          submitSearch(selectedVal);
+        } else {
+          saveSearchQuery(searchInput.value);
+        }
+      }
+    });
+
+    searchForm.addEventListener('submit', (e) => {
+      saveSearchQuery(searchInput.value);
+    });
 
     function getCategoryFallbackIcon(listId, title = '', description = '') {
       const text = (title + ' ' + description).toLowerCase();
@@ -764,6 +1022,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      initRandomBackground();
       logDebug(`Startpage active layout loaded. Build Revision: [ ${BUILD_REVISION} ]`, 'success');
     });
 
