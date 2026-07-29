@@ -37,7 +37,7 @@
       position: relative;
     }
 
-    /* Background Artwork - Pure CSS Background Property optimized for Ultrawide */
+    /* Background Artwork - Dynamically fetched via GitHub API JSON */
     .bg-wrapper {
       position: absolute;
       inset: 0;
@@ -174,7 +174,7 @@
       opacity: 0.6;
     }
 
-    /* Links Grid - Scaled up icons an additional 25% (24px * 1.25 = 30px) and adjusted card padding */
+    /* Links Grid */
     .links-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -509,11 +509,11 @@
   <div class="debug-drawer">
     <div class="debug-toggle" onclick="toggleDebug()">DEBUG</div>
     <div class="debug-header">
-      <span>FEED DIAGNOSTICS</span>
+      <span>FEED & BG DIAGNOSTICS</span>
       <button class="clear-cache-btn" onclick="clearFeedCache()">Clear Cache</button>
     </div>
     <div class="debug-logs" id="debug-logs">
-      <div class="log-entry">Console initialized. Ready for feed events...</div>
+      <div class="log-entry">Console initialized. Ready for events...</div>
     </div>
   </div>
 
@@ -569,25 +569,46 @@
   </div>
 
   <script>
-    const BUILD_REVISION = 'rev-16-random-bgart';
+    const BUILD_REVISION = 'rev-18-github-json-bgart';
 
-    // List of background image filenames available in the bgart/ directory
-    const bgArtFiles = [
-      'bg1.jpg',
-      'bg2.jpg',
-      'bg3.jpg',
-      'bg4.jpg',
-      'bg5.jpg'
-      // You can easily append more filenames here as your collection grows
-    ];
-
-    function initRandomBackground() {
+    // Fetch the JSON directory listing from GitHub API and pick a random image
+    async function initRandomBackground() {
       const bgWrapper = document.getElementById('bg-wrapper');
-      if (!bgWrapper || bgArtFiles.length === 0) return;
-      const randomIndex = Math.floor(Math.random() * bgArtFiles.length);
-      const chosenBg = `bgart/${bgArtFiles[randomIndex]}`;
-      bgWrapper.style.backgroundImage = `url('${chosenBg}')`;
-      logDebug(`Loaded random background: ${chosenBg}`, 'success');
+      if (!bgWrapper) return;
+
+      const apiUrl = 'https://api.github.com/repos/dvflextech/browserfox/contents/bgart?ref=main';
+
+      try {
+        logDebug('Fetching JSON background directory listing from GitHub API...');
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error(`GitHub API returned status ${res.status}`);
+        
+        const files = await res.json();
+        
+        // Ensure the response is a valid array of files
+        if (!Array.isArray(files)) {
+          throw new Error('GitHub API response is not a valid JSON array.');
+        }
+
+        // Filter for image files (.jpg, .jpeg, .png, .webp)
+        const imageFiles = files.filter(file => file.type === 'file' && /\.(jpe?g|png|webp)$/i.test(file.name));
+
+        if (imageFiles.length === 0) {
+          throw new Error('No image files found in the bgart JSON payload.');
+        }
+
+        const randomIndex = Math.floor(Math.random() * imageFiles.length);
+        const chosenFile = imageFiles[randomIndex];
+        
+        // Utilize download_url directly from the parsed JSON payload
+        const bgUrl = chosenFile.download_url || `https://raw.githubusercontent.com/dvflextech/browserfox/main/bgart/${encodeURIComponent(chosenFile.name)}`;
+        
+        bgWrapper.style.backgroundImage = `url('${bgUrl}')`;
+        logDebug(`Successfully loaded random background via JSON: ${chosenFile.name}`, 'success');
+      } catch (err) {
+        logDebug(`GitHub JSON background load failed: ${err.message}. Falling back to static asset.`, 'warn');
+        bgWrapper.style.backgroundImage = `url('bgart/bg1.jpg')`;
+      }
     }
 
     function logDebug(message, type = 'info') {
